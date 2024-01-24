@@ -1,4 +1,4 @@
-import CheckTable from "./components/ProductCheckTable";
+import CheckTable from "./components/CategoryCheckTable";
 import React from "react";
 import {
     Modal,
@@ -12,7 +12,8 @@ import {
     useDisclosure,
     Textarea,
     Select,
-    useToast
+    useToast,
+    Skeleton
 } from '@chakra-ui/react'
 import { useEffect, useState, useCallback } from "react";
 import { Redirect } from 'react-router-dom'
@@ -32,12 +33,12 @@ const columnData = [
         accessor: "name"
     },
     {
-        Header: "category",
-        accessor: "category"
+        Header: "created by",
+        accessor: "createdBy"
     },
     {
-        Header: "imageUrl",
-        accessor: "imageUrl"
+        Header: "created at",
+        accessor: "createdAt"
     },
     {
         Header: "description",
@@ -45,44 +46,15 @@ const columnData = [
     }
 ]
 
-export default function ProductPage() {
+export default function CategoryPage() {
 
-    const [data, setData] = useState([])
     const [listCateGory, setListCategory] = useState([])
     const { isOpen, onOpen, onClose } = useDisclosure()
 
     const [addModalNameValue, setAddModalNameValue] = useState("")
     const [addModalDesValue, setAddModalDesValue] = useState("")
-    const [addModalCateValue, setAddModalCateValue] = useState(-1)
-    const [imageFile, setImageFile] = useState()
 
     const toast = useToast();
-
-    const onDrop = useCallback(acceptedFiles => {
-        setImageFile(acceptedFiles[0])
-    }, [])
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop, accept: {
-            "image/*": [],
-        },
-        maxFiles: 1,
-        multiple: false,
-    })
-
-    useEffect(() => {
-        const prefetch = async () => {
-            const data = await fetch('http://localhost:8080/api/v1/product?page=0&size=5', {
-                method: 'GET'
-            }).then(res => { return res.json() })
-            const checkData = []
-            data.map(item => (
-                checkData.push({ ...item, id: [item.id, false], imageUrl: { value: item.imageUrl ? item.imageUrl : "", customElement: generateCustomElement(item.imageUrl, <p>missing!</p>, <img src={item.imageUrl} alt="" />) } })
-            ))
-            console.log(checkData)
-            setData(checkData)
-        }
-        prefetch();
-    }, [])
 
     useEffect(() => {
         const prefetch = async () => {
@@ -94,47 +66,29 @@ export default function ProductPage() {
         prefetch();
     }, [])
 
-    const handleAddProduct = () => {
-        if (imageFile) {
-            toast({
-                duration: 3000,
-                title: "missing image",
-                status: "error",
-            })
-        }else if(addModalCateValue === -1){
-            toast({
-                duration: 3000,
-                title: "missing category",
-                status: "error",
-            })
-        }else if(addModalNameValue.trim().length === 0){
+    const handleAddCategory = () => {
+        if (addModalNameValue.trim().length === 0) {
             toast({
                 duration: 3000,
                 title: "missing name",
                 status: "error",
             })
-        }else{
-            const imageUrl = `/product/image/${uuid()}`
-            const productImageStorageRef = ref(storage, imageUrl)
-
-    
+        } else {
             const data = {
                 id: 0,
                 name: addModalNameValue,
                 description: addModalDesValue,
-                category: addModalCateValue,
-                imageUrl: imageUrl
             }
-            axios.post('http://localhost:8080/api/v1/product',data).then(
+            axios.post('http://localhost:8080/api/v1/category', data).then(
                 res => {
-                    if(!res.status.toString().startsWith("4") && !res.status.toString().startsWith("4")){
-                        uploadBytes(productImageStorageRef, imageFile)
+                    if (!res.status.toString().startsWith("4") && !res.status.toString().startsWith("5")) {
+
                         toast({
                             duration: 3000,
                             title: "add successfully",
                             status: "success",
                         })
-                    }else{
+                    } else {
                         toast({
                             duration: 3000,
                             title: "sth wrong, pls check",
@@ -161,29 +115,6 @@ export default function ProductPage() {
                                     <p>name</p>
                                     <input className="w-full text-xl border-[1px] p-2 border-slate-400 focus:outline-none focus:border-cyan-500 rounded-3xl" type="text" value={addModalNameValue} onChange={e => { setAddModalNameValue(e.target.value) }} />
                                 </div>
-                                <div className="flex flex-col gap-3">
-                                    <p className="font-bold">upload image</p>
-                                    <div className="flex h-24 items-center justify-center border-[1px] border-slate-500" {...getRootProps()}>
-                                        <input {...getInputProps()} />
-                                        {
-                                            isDragActive ?
-                                                <p>Thả</p> :
-                                                <p>bấm để chọn hoặc kéo thả ảnh vào đây</p>
-                                        }
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <p>category</p>
-                                    <Select placeholder='Select option' defaultValue={-1} onChange={e => { setAddModalCateValue(e.target.value) }}>
-                                        {listCateGory.map((cate, index) => {
-                                            return (
-                                                <option key={index} value={cate.id}>{cate.name}</option>
-                                            )
-                                        })}
-                                        <option value={-1} onClick={() => { Redirect('/category/add') }}>add new</option>
-                                    </Select>
-                                </div>
                                 <div className="flex flex-col gap-2">
                                     <p>des</p>
                                     <Textarea
@@ -199,12 +130,12 @@ export default function ProductPage() {
 
                         <ModalFooter>
                             <Button colorScheme='blue' mr={3} onClick={onClose}>Close </Button>
-                            <Button variant='ghost' onClick={() => { handleAddProduct() }}>Save</Button>
+                            <Button variant='ghost' onClick={() => { handleAddCategory() }}>Save</Button>
                         </ModalFooter>
                     </ModalContent>
                 </Modal>
             </div>
-            {data.length > 0 && <CheckTable columnsData={columnData} tableData={data} />}
+            {listCateGory.length > 0 ? <CheckTable columnsData={columnData} tableData={listCateGory} /> : <Skeleton className="w-full h-52 rounded-xl"/>}
         </div>
     )
 }

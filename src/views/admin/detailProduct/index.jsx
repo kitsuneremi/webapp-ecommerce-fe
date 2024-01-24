@@ -1,6 +1,11 @@
-import CheckTable from "./components/ProductCheckTable";
-import React from "react";
+import axios from "axios";
+import { useEffect, useState, useCallback } from "react";
+import { useLocation, Redirect } from "react-router-dom";
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { storage } from "lib/firebase";
+import { useDropzone } from 'react-dropzone'
 import {
+    Skeleton,
     Modal,
     ModalOverlay,
     ModalContent,
@@ -13,50 +18,19 @@ import {
     Textarea,
     Select,
     useToast
-} from '@chakra-ui/react'
-import { useEffect, useState, useCallback } from "react";
-import { Redirect } from 'react-router-dom'
-import { uploadBytes, ref } from 'firebase/storage'
-import { storage } from "lib/firebase";
+} from "@chakra-ui/react";
 import { v4 as uuid } from 'uuid'
-import { useDropzone } from 'react-dropzone'
-import axios from "axios";
-
-const columnData = [
-    {
-        Header: "id",
-        accessor: "id"
-    },
-    {
-        Header: "name",
-        accessor: "name"
-    },
-    {
-        Header: "category",
-        accessor: "category"
-    },
-    {
-        Header: "imageUrl",
-        accessor: "imageUrl"
-    },
-    {
-        Header: "description",
-        accessor: "description"
-    }
-]
-
-export default function ProductPage() {
-
-    const [data, setData] = useState([])
-    const [listCateGory, setListCategory] = useState([])
+export default function DetailProduct() {
+    const location = useLocation();
+    const toast = useToast();
     const { isOpen, onOpen, onClose } = useDisclosure()
 
-    const [addModalNameValue, setAddModalNameValue] = useState("")
-    const [addModalDesValue, setAddModalDesValue] = useState("")
-    const [addModalCateValue, setAddModalCateValue] = useState(-1)
-    const [imageFile, setImageFile] = useState()
-
-    const toast = useToast();
+    const [currentProductData, setCurrentProductData] = useState();
+    const [listCateGory, setListCategory] = useState([])
+    const [editModalNameValue, setEditModalNameValue] = useState(currentProductData ? currentProductData.name : '')
+    const [editModalDesValue, setEditModalDesValue] = useState(currentProductData ? currentProductData.description : '')
+    const [editModalCateValue, setEditModalCateValue] = useState(currentProductData ? currentProductData.category : -1)
+    const [imageFile, setImageFile] = useState();
 
     const onDrop = useCallback(acceptedFiles => {
         setImageFile(acceptedFiles[0])
@@ -69,19 +43,23 @@ export default function ProductPage() {
         multiple: false,
     })
 
+    /*
+    {
+        "id": 1,
+        "imageUrl": null,
+        "name": "Váy",
+        "category": null,
+        "description": null
+    }
+    */
+
     useEffect(() => {
-        const prefetch = async () => {
-            const data = await fetch('http://localhost:8080/api/v1/product?page=0&size=5', {
-                method: 'GET'
-            }).then(res => { return res.json() })
-            const checkData = []
-            data.map(item => (
-                checkData.push({ ...item, id: [item.id, false], imageUrl: { value: item.imageUrl ? item.imageUrl : "", customElement: generateCustomElement(item.imageUrl, <p>missing!</p>, <img src={item.imageUrl} alt="" />) } })
-            ))
-            console.log(checkData)
-            setData(checkData)
-        }
-        prefetch();
+        axios.get(`http://localhost:8080/api/v1/product/${location.pathname.split("/")[3]}`).then(res => {
+            const imageUrlRef = ref(storage, res.data.imageUrl)
+            getDownloadURL(imageUrlRef).then(url => {
+                setCurrentProductData({ ...res.data, imageUrl: url })
+            })
+        })
     }, [])
 
     useEffect(() => {
@@ -94,47 +72,47 @@ export default function ProductPage() {
         prefetch();
     }, [])
 
-    const handleAddProduct = () => {
+    const handleEditProduct = () => {
         if (imageFile) {
             toast({
                 duration: 3000,
                 title: "missing image",
                 status: "error",
             })
-        }else if(addModalCateValue === -1){
+        } else if (editModalCateValue === -1) {
             toast({
                 duration: 3000,
                 title: "missing category",
                 status: "error",
             })
-        }else if(addModalNameValue.trim().length === 0){
+        } else if (editModalNameValue.trim().length === 0) {
             toast({
                 duration: 3000,
                 title: "missing name",
                 status: "error",
             })
-        }else{
+        } else {
             const imageUrl = `/product/image/${uuid()}`
             const productImageStorageRef = ref(storage, imageUrl)
 
-    
+
             const data = {
                 id: 0,
-                name: addModalNameValue,
-                description: addModalDesValue,
-                category: addModalCateValue,
+                name: editModalNameValue,
+                description: editModalDesValue,
+                category: editModalCateValue,
                 imageUrl: imageUrl
             }
-            axios.post('http://localhost:8080/api/v1/product',data).then(
+            axios.post('http://localhost:8080/api/v1/product', data).then(
                 res => {
-                    if(!res.status.toString().startsWith("4") && !res.status.toString().startsWith("4")){
+                    if (!res.status.toString().startsWith("4") && !res.status.toString().startsWith("4")) {
                         uploadBytes(productImageStorageRef, imageFile)
                         toast({
                             duration: 3000,
                             title: "add successfully",
                             status: "success",
                         })
-                    }else{
+                    } else {
                         toast({
                             duration: 3000,
                             title: "sth wrong, pls check",
@@ -147,9 +125,12 @@ export default function ProductPage() {
     }
 
     return (
-        <div className="mt-20">
-            <div className="">
-                <Button onClick={onOpen}>Open Modal</Button>
+        <div className="w-full h-full pt-14 flex max-md:flex-col gap-4">
+            <div className="w-1/2 max-md:w-full aspect-square p-2">
+                {currentProductData ? <img className="w-full h-full rounded-xl" src={currentProductData.imageUrl} alt="" /> : <Skeleton className="w-full h-full rounded-xl" />}
+            </div>
+            <div className="flex flex-col flex-grow gap-3 p-2">
+                <Button onClick={onOpen}>edit</Button>
                 <Modal isOpen={isOpen} onClose={onClose}>
                     <ModalOverlay />
                     <ModalContent>
@@ -159,7 +140,7 @@ export default function ProductPage() {
                             <div className="w-full flex flex-col gap-3">
                                 <div className="flex flex-col gap-3">
                                     <p>name</p>
-                                    <input className="w-full text-xl border-[1px] p-2 border-slate-400 focus:outline-none focus:border-cyan-500 rounded-3xl" type="text" value={addModalNameValue} onChange={e => { setAddModalNameValue(e.target.value) }} />
+                                    <input className="w-full text-xl border-[1px] p-2 border-slate-400 focus:outline-none focus:border-cyan-500 rounded-3xl" type="text" value={editModalNameValue} onChange={e => { setEditModalNameValue(e.target.value) }} />
                                 </div>
                                 <div className="flex flex-col gap-3">
                                     <p className="font-bold">upload image</p>
@@ -175,7 +156,7 @@ export default function ProductPage() {
 
                                 <div className="flex flex-col gap-2">
                                     <p>category</p>
-                                    <Select placeholder='Select option' defaultValue={-1} onChange={e => { setAddModalCateValue(e.target.value) }}>
+                                    <Select placeholder='Select option' defaultValue={-1} onChange={e => { setEditModalCateValue(e.target.value) }}>
                                         {listCateGory.map((cate, index) => {
                                             return (
                                                 <option key={index} value={cate.id}>{cate.name}</option>
@@ -187,8 +168,8 @@ export default function ProductPage() {
                                 <div className="flex flex-col gap-2">
                                     <p>des</p>
                                     <Textarea
-                                        value={addModalDesValue}
-                                        onChange={e => { setAddModalDesValue(e.target.value) }}
+                                        value={editModalDesValue}
+                                        onChange={e => { setEditModalDesValue(e.target.value) }}
                                         placeholder='Here is a sample placeholder'
                                         size='sm'
                                         resize={'vertical'}
@@ -199,21 +180,26 @@ export default function ProductPage() {
 
                         <ModalFooter>
                             <Button colorScheme='blue' mr={3} onClick={onClose}>Close </Button>
-                            <Button variant='ghost' onClick={() => { handleAddProduct() }}>Save</Button>
+                            <Button variant='ghost' onClick={() => { handleEditProduct() }}>Save</Button>
                         </ModalFooter>
                     </ModalContent>
                 </Modal>
+
+                <div className="w-full flex flex-col gap-3">
+                    <div className="flex flex-col gap-3">
+                        <p>name</p>
+                        {currentProductData ? <p className="w-full text-xl font-bold">{currentProductData.name}</p> : <Skeleton className="w-full h-7" />}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <p>category</p>
+                        {currentProductData ? <p className="w-full text-xl font-bold">{currentProductData.category}</p> : <Skeleton className="w-full h-7" />}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <p>des</p>
+                        {currentProductData ? <p className="w-full text-xl font-bold">{currentProductData.description}</p> : <Skeleton className="w-full h-7" />}
+                    </div>
+                </div>
             </div>
-            {data.length > 0 && <CheckTable columnsData={columnData} tableData={data} />}
         </div>
     )
-}
-
-
-function generateCustomElement(request, falseRes, trueRes) {
-    if (request) {
-        return trueRes
-    } else {
-        return falseRes
-    }
 }

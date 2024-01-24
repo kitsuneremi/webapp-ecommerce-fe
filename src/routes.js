@@ -12,6 +12,8 @@ import {
 // Admin Imports
 import MainDashboard from "views/admin/default";
 import Product from "views/admin/product";
+import DetailProduct from "views/admin/detailProduct";
+import Category from 'views/admin/category'
 import NFTMarketplace from "views/admin/marketplace";
 import Profile from "views/admin/profile";
 import DataTables from "views/admin/dataTables";
@@ -29,6 +31,21 @@ const routes = [
     component: MainDashboard,
   },
   {
+    name: "Product detail",
+    layout: "/admin",
+    path: "/product/:id",
+    icon: (
+      <Icon
+        as={MdOutlineShoppingCart}
+        width='20px'
+        height='20px'
+        color='inherit'
+      />
+    ),
+    component: DetailProduct,
+    secondary: true,
+  },
+  {
     name: "Product",
     layout: "/admin",
     path: "/product",
@@ -41,6 +58,21 @@ const routes = [
       />
     ),
     component: Product,
+    secondary: true,
+  },
+  {
+    name: "Category",
+    layout: "/admin",
+    path: "/category",
+    icon: (
+      <Icon
+        as={MdOutlineShoppingCart}
+        width='20px'
+        height='20px'
+        color='inherit'
+      />
+    ),
+    component: Category,
     secondary: true,
   },
   {
