@@ -42,6 +42,8 @@ import { BillRequest, BillResponse, ProductResponse, ProductDetailResponse, Cart
 import { vnData } from '../../../lib/extra'
 import { FaRegTrashAlt, FaChevronRight } from "react-icons/fa";
 import { ReactJSXElement } from "@emotion/react/types/jsx-namespace";
+import { BsBank2 } from "react-icons/bs";
+import { TbBrandCashapp } from "react-icons/tb";
 
 
 
@@ -63,7 +65,7 @@ export default function SellPage() {
     const [listDisplayBill, setListDisplayBill] = useState<BillResponse[]>([
         {
             bookingDate: new Date(),
-            codeBill: "",
+            codeBill: "abcde",
             completionDate: new Date(),
             CustomerResponse: {
                 address: "",
@@ -85,6 +87,31 @@ export default function SellPage() {
             receiverName: "name",
             receiverPhone: "023042304234",
             status: "test"
+        },
+        {
+            bookingDate: new Date(),
+            codeBill: "defgh",
+            completionDate: new Date(),
+            CustomerResponse: {
+                address: "",
+                birthday: new Date(),
+                codeCustomer: "",
+                email: "test@gamil.com",
+                fullName: "hoang van b",
+                gender: false,
+                id: 10,
+                password: "abc",
+                phone: "034534234234",
+                username: "test"
+
+            },
+            DeliveryDate: new Date(),
+            id: 1,
+            paymentDate: new Date(),
+            receiverAddress: "tttt",
+            receiverName: "ttt",
+            receiverPhone: "012282834234",
+            status: "test"
         }
     ]);
 
@@ -103,7 +130,7 @@ export default function SellPage() {
 
     const [currentBillSelected, setCurrentBillSelected] = useState<BillResponse>({ //biến xác định xem hóa đơn nào đang được lựa chọn để sửa
         bookingDate: new Date(),
-        codeBill: "",
+        codeBill: "abcde",
         completionDate: new Date(),
         CustomerResponse: {
             address: "",
@@ -151,17 +178,25 @@ export default function SellPage() {
 
     // HẾT danh sách sp trong bill đang dc sửa
 
-    // modal thêm thông tin khách hàng
+    // thông tin khách hàng
     const [addModalPhone, setAddModalPhone] = useState<string>("");
     const [addModalDetailAddress, setAddModalDetailAddress] = useState<string>("");
     const [addModalProvince, setAddModalProvince] = useState<string>("1");
     const [addModalDistrict, setAddModalDistrict] = useState<string>();
     const [addModalWard, setAddModalWard] = useState<string>();
+    const [addModalFullname, setAddModalFullname] = useState<string>("");
+    const [addModalEmail, setAddModalEmail] = useState<string>("");
     const [listDistricts, setListDistricts] = useState<any[]>([]);
     const [listWards, setListWards] = useState<any[]>([]);
 
-    const [listCustomer, setListCustomer] = useState<any[]>();
+
+
+    const [searchCustomerValue, setSearchCustomerValue] = useState<string>("");
+    const [listSearchCustomerValue, setListSearchCustomer] = useState<CustomerResponse[]>([]);
+
+    const [listCustomer, setListCustomer] = useState<CustomerResponse[]>();
     const [currentCustomer, setCurrentCustomer] = useState<CustomerResponse>();
+
 
     React.useEffect(() => {
         const province = vnData.find(target => { return target.code == addModalProvince });
@@ -178,11 +213,31 @@ export default function SellPage() {
         }
     }, [addModalDistrict, listDistricts])
 
+    React.useEffect(() => {
+        if (searchCustomerValue.trim().length > 0) {
+            axios.get(`http://localhost:8080/api/v1/customer?keyword=${searchCustomerValue}`).then(res => {
+                setListSearchCustomer(res.data)
+            })
+        }
+    }, [searchCustomerValue])
 
-    // HẾT modal thêm thông tin khách hàng
+
+    const CustomerRender = ({ customer }: { customer: CustomerResponse }): JSX.Element => {
+        return (
+            <div className="flex">
+                <img src="https://th.bing.com/th/id/OIP.gau_s0CHzCxhnpvuIU4LaAHaHa?rs=1&pid=ImgDetMain" alt="" className="w-7 aspect-square rounded-full" />
+                <div className="flex flex-col gap-2">
+                    <p className="text-lg font-bold">{customer.fullName}</p>
+                    <p className="text-sm text-slate-600">{customer.phone}</p>
+                </div>
+            </div>
+        )
+    }
+
+    // HẾT thông tin khách hàng
 
 
-    // modal voucher 
+    // voucher 
     const [searchVoucherValue, setSearchVoucherValue] = useState<string>('');
     const [voucherFocused, setVoucherFocused] = useState<number>();
     const [listVoucher, setListVoucher] = useState<VoucherResponse[]>([]);
@@ -226,7 +281,7 @@ export default function SellPage() {
         )
     }
 
-    // HẾT modal voucher
+    // HẾT voucher
 
     const handleCreateEmptyBill = () => {
         const data: BillRequest = {
@@ -251,7 +306,7 @@ export default function SellPage() {
     }
 
     return (
-        <div className="mt-20 w-full h-[calc(100vh-80px)] flex flex-col mb-28">
+        <div className="mt-20 w-full flex flex-col mb-4">
             <div className="flex w-full items-center justify-between px-3">
                 <p className="text-xl font-bold text-slate-500">Quản lý đơn hàng</p>
                 <button className="px-3 py-2 text-lg font-semibold bg-cyan-500 text-slate-200 rounded-full" onClick={handleCreateEmptyBill}>tạo đơn</button>
@@ -391,7 +446,7 @@ export default function SellPage() {
                                                                                     <Td>{index + 1}</Td>
                                                                                     <Td>
                                                                                         <div className="flex gap-2">
-                                                                                            <img className="w-28 aspect-square" src="" alt="" />
+                                                                                            <img className="w-28 aspect-square" src="https://th.bing.com/th/id/OIP.gau_s0CHzCxhnpvuIU4LaAHaHa?rs=1&pid=ImgDetMain" alt="" />
                                                                                             <div className="flex flex-col gap-2">
                                                                                                 <p className="text-xl font-bold">{cart.productDetails.product.name}</p>
                                                                                                 <p className="text-xs text-slate-600 font-semibold">{cart.productDetails.product.description}</p>
@@ -445,13 +500,24 @@ export default function SellPage() {
 
                                                                     <TabPanels>
                                                                         <TabPanel>
+                                                                            <Input placeholder='nhập thông tin khách hàng' value={searchCustomerValue} onChange={e => { setSearchCustomerValue(e.target.value) }} />
+
+                                                                            {
+                                                                                listSearchCustomerValue.map((customer, index) => {
+                                                                                    return <CustomerRender customer={customer} key={index} />
+                                                                                })
+                                                                            }
 
                                                                         </TabPanel>
                                                                         {/* panel tạo khách hàng */}
                                                                         <TabPanel>
                                                                             <FormControl onSubmit={handleCreateEmptyBill}>
-                                                                                <FormLabel>sdt</FormLabel>
-                                                                                <Input type='text' value={addModalPhone} />
+                                                                                <FormLabel>Họ và tên</FormLabel>
+                                                                                <Input type='text' value={addModalFullname} onChange={e => { setAddModalFullname(e.target.value) }} />
+                                                                                <FormLabel>số điện thoại</FormLabel>
+                                                                                <Input type='text' value={addModalPhone} onChange={e => { setAddModalPhone(e.target.value) }} />
+                                                                                <FormLabel>email(nếu có)</FormLabel>
+                                                                                <Input type='text' value={addModalEmail} onChange={e => { setAddModalEmail(e.target.value) }} />
                                                                                 <FormLabel>Tình/Thành phố</FormLabel>
                                                                                 <Select defaultValue={"1"} placeholder='Tình/ Thành phố' value={addModalProvince} onChange={e => { setAddModalProvince(e.target.value) }}>
                                                                                     {vnData.map((province) => {
@@ -488,9 +554,9 @@ export default function SellPage() {
                                                             </ModalBody>
                                                             <ModalFooter>
                                                                 <Button colorScheme='blue' mr={3} onClick={onAddCustomerClose}>
-                                                                    Close
+                                                                    Hủy
                                                                 </Button>
-                                                                <Button variant='ghost'>Secondary Action</Button>
+                                                                <Button variant='ghost'>OK</Button>
                                                             </ModalFooter>
                                                         </ModalContent>
                                                     </Modal>
@@ -547,7 +613,7 @@ export default function SellPage() {
                                                 <p className="text-xl font-bold">Thông tin thanh toán</p>
                                                 <div className="flex max-md:flex-col gap-3 mt-3 p-2">
                                                     <div className="w-1/2 max-md:w-full flex items-center">
-                                                        <img src="" alt="i" className="w-full aspect-square" />
+                                                        <img src="https://th.bing.com/th/id/OIP.gau_s0CHzCxhnpvuIU4LaAHaHa?rs=1&pid=ImgDetMain" alt="i" className="w-full aspect-square" />
                                                     </div>
                                                     <div className="w-1/2 max-md:w-full">
                                                         {/* Modal voucher */}
@@ -618,6 +684,17 @@ export default function SellPage() {
                                                             <div className="flex justify-between">
                                                                 <p>Tổng tiền</p>
                                                                 <p>430.000 đ</p>
+                                                            </div>
+                                                        </div>
+                                                        {/* thanh toán */}
+                                                        <div className="flex gap-3 mt-3">
+                                                            <div className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
+                                                                <TbBrandCashapp />
+                                                                <p>tiền mặt</p>
+                                                            </div>
+                                                            <div className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
+                                                                <BsBank2 />
+                                                                <p>chuyển khoản</p>
                                                             </div>
                                                         </div>
 
