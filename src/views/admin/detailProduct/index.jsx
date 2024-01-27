@@ -54,7 +54,8 @@ export default function DetailProduct() {
     */
 
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/v1/product/${location.pathname.split("/")[3]}`).then(res => {
+        const id = location.pathname.split("/")[3];
+        axios.get(`http://localhost:8080/api/v1/product/${id === ":id" ? 1 : id}`).then(res => {
             const imageUrlRef = ref(storage, res.data.imageUrl)
             getDownloadURL(imageUrlRef).then(url => {
                 setCurrentProductData({ ...res.data, imageUrl: url })
