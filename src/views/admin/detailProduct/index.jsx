@@ -130,7 +130,7 @@ export default function DetailProduct() {
             <div className="w-1/2 max-md:w-full aspect-square p-2">
                 {currentProductData ? <img className="w-full h-full rounded-xl" src={currentProductData.imageUrl} alt="" /> : <Skeleton className="w-full h-full rounded-xl" />}
             </div>
-            <div className="flex flex-col flex-grow gap-3 p-2">
+            <div className="flex flex-col flex-grow gap-3 p-2 mt-5">
                 <Button onClick={onOpen}>edit</Button>
                 <Modal isOpen={isOpen} onClose={onClose}>
                     <ModalOverlay />
