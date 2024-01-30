@@ -1,115 +1,109 @@
-# [Horizon UI ⚡️](https://horizon-ui.com/horizon-ui-chakra) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?url=https://horizon-ui.com/&text=Check%20Horizon%20UI,%20the%20trendiest%20open-source%20admin%20template%20for%20Chakra%20UI%20&%20React!)
+## [Material Kit - React](https://material-kit-react.devias.io/) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?text=%F0%9F%9A%A8Devias%20Freebie%20Alert%20-%20An%20awesome%20ready-to-use%20register%20page%20made%20with%20%23material%20%23react%0D%0Ahttps%3A%2F%2Fdevias.io%20%23createreactapp%20%23devias%20%23material%20%23freebie%20%40devias-io)
 
-![version](https://img.shields.io/badge/version-1.3.0-brightgreen.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
-[![GitHub issues open](https://img.shields.io/github/issues/horizon-ui/horizon-ui-chakra.svg?maxAge=2592000)](https://github.com/horizon-ui/horizon-ui-chakra/issues?q=is%3Aopen+is%3Aissue)
 
-<p>&nbsp;</p>
+[![Material Kit - React](https://github.com/devias-io/material-kit-react/blob/main/public/assets/thumbnail.png)](https://material-kit-react.devias.io/)
 
-[<img alt="Horizon UI" src="https://i.ibb.co/fdyTwz1/introduction-image-2.png" /> ](https://github.com/horizon-ui/horizon-ui-chakra)
+> Free React Admin Dashboard made with [MUI's](https://mui.com/?ref=devias-io)
+> components, [React](https://reactjs.org/?ref=devias-io) and of
+> course [Next.js](https://github.com/vercel/next.js/?ref=devias-io) to boost your app development
+> process!
 
-<p>&nbsp;</p>
+## Demo
 
+- [Dashboard Page](https://material-kit-react.devias.io)
+- [Companies Page](https://material-kit-react.devias.io/companies)
+- [Customers Page](https://material-kit-react.devias.io/customers)
+- [Account Page](https://material-kit-react.devias.io/account)
+- [Settings Page](https://material-kit-react.devias.io/settings)
+- [Login Page](https://material-kit-react.devias.io/auth/login)
+- [Register Page](https://material-kit-react.devias.io/auth/register)
 
-Get started and build your dream web app with Horizon UI, the most trendiest &
-innovative Open Source Admin Template for Chakra UI & React!
+## Free Figma Community File
 
----
+- [Duplicate File](https://www.figma.com/file/b3L1Np4RYiicZAOMopHNkm/Devias-Dashboard-Design-Library-Kit)
 
-### Introduction
+## Upgrade to PRO Version
 
-Designed for those who like modern UI elements and beautiful websites. Made of
-hundred of elements, designed blocks and fully coded pages, Horizon UI is ready
-to help you create stunning websites and webapps.
+We also have a pro version of this product which bundles even more pages and components if you want
+to save more time and design efforts :)
 
-Save hundreds of hours trying to create and develop a dashboard from scratch.
-The fastest, most responsive & trendiest dashboard is here. Seriously.
+| Free Version (this one) | [Material Kit Pro - React](https://mui.com/store/items/devias-kit-pro/)  |
+|-------------------------|:-------------------------------------------------------------------------|
+| **9** Demo Pages        | **40+** demo pages                                                       
+| ✔ Mocked Authentication | ✔ Authentication with **Amplify**, **Auth0**, **JWT** and **Firebase**   
+| -                       | ✔ Dark & light mode                                                      
+| -                       | ✔ CRA version                                                            
+| -                       | ✔ TypeScript version - for Standard Plus and Extended license            
+| -                       | ✔ Design files (sketch & figma) - for Standard Plus and Extended license 
+| -                       | ✔ Complete users flows                                                   
 
-With Horizon UI you will find many examples for pages like NFTs Pages,
-Authentication Pages, Profile and so on. Just choose between a Basic Design or a
-cover and you are good to go!
+## Quick start
 
-### 🎉 [NEW] Horizon UI Components
-All the main components from both versions, this will help you to see and interact with all & the latest added components of Horizon (also, new components are on the way, stay tuned)! ⚡️
-<a href="https://horizon-ui.com/components/?ref=readme-horizon" target="_blank">See all components</a>
+- [Download from Github](https://github.com/devias-io/material-kit-react/archive/master.zip)
+  or [Download from Devias](https://devias.io/products/material-kit-react) or clone the
+  repo: `git clone https://github.com/devias-io/material-kit-react.git`
 
+- Make sure your Node.js and npm versions are up to date for `React 18`
 
-### Documentation
+- Install dependencies: `npm install` or `yarn`
 
-Each element is well presented in a very complex documentation. You can read
-more about the <a href="https://horizon-ui.com/documentation/docs/introduction?ref=readme-horizon" target="_blank">documentation
-here.</a>
+- Start the server: `npm run dev` or `yarn dev`
 
-### Quick Start
+- Views are on: `localhost:3000`
 
-Install Horizon UI by running either of the following:
+## File Structure
 
-- Install NodeJS LTS from
-  [NodeJs Official Page](https://nodejs.org/en/?ref=horizon-documentation)
-  (NOTE: Product only works with LTS version)
+Within the download you'll find the following directories and files:
 
-Clone the repository with the following command:
+```
+material-kit-react
 
-```bash
-git clone https://github.com/horizon-ui/horizon-ui-chakra.git
+┌── .eslintrc.json
+├── .gitignore
+├── CHANGELOG.md
+├── LICENSE.md
+├── next.config.js
+├── package.json
+├── README.md
+├── public
+└── src
+	├── components
+	├── contexts
+	├── guards
+	├── hocs
+	├── hooks
+	├── layouts
+	├── sections
+	├── theme
+	├── utils
+	└── pages
+		├── 404.js
+		├── _app.js
+		├── _document.js
+		├── account.js
+		├── companies.js
+		├── customers.js
+		├── index.js
+		├── products.js
+		└── settings.js
+		└──  auth
+			├── login.js
+			└── register.js
 ```
 
-Run in terminal this command:
+## Resources
 
-```bash
-npm install
-```
+- More freebies like this one: <https://devias.io>
 
-Then run this command to start your local server
+## Reporting Issues:
 
-```bash
-npm start
-```
+- [Github Issues Page](https://github.com/devias-io/react-material-dashboard/issues?ref=devias-io)
 
-### Example Pages
+## License
 
-If you want to get inspiration or just show something directly to your clients,
-you can jump start your development with our pre-built example pages. You will
-be able to quickly set up the basic structure for your web project. View
-<a href="https://horizon-ui.com/horizon-ui-chakra/?ref=readme-horizon" target="_blank">example
-pages here.</a>
+- Licensed under MIT (https://github.com/devias-io/react-material-dashboard/blob/master/LICENSE.md)
 
-### Versions
+## Contact Us
 
-| Free Version                                                                                                       | PRO Version                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| [![Horizon UI](https://i.ibb.co/fdyTwz1/introduction-image-2.png)](https://www.horizon-ui.com/?ref=readme-horizon) | [![Horizon UI PRO](https://i.ibb.co/R6jFKRM/introduction-image-1.png)](https://www.horizon-ui.com/pro?ref=readme-horizon) |
-
-### Figma Version
-
-Horizon UI is available in Figma format as well! Check it out on Figma
-Community! 🎨
-[See the Horizon UI Figma design files](https://bit.ly/horizon-figma)
-
-### Reporting Issues
-
-We use GitHub Issues as the official bug tracker for the Horizon UI. Here are
-some advices for our users that want to report an issue:
-
-1. Make sure that you are using the latest version of the Horizon UI Dashbaord.
-   Check the CHANGELOG from your dashboard on our
-   [CHANGE LOG File](https://github.com/horizon-ui/horizon-ui-chakra/blob/main/CHANGELOG.md?ref=readme-horizon).
-2. Providing us reproducible steps for the issue will shorten the time it takes
-   for it to be fixed.
-3. Some issues may be browser specific, so specifying in what browser you
-   encountered the issue might help.
-
----
-
-### Community
-
-Connect with the community! Feel free to ask questions, report issues, and meet
-new people that already use Horizon UI!
-
-💬 [Join the #HorizonUI Discord Community!](https://discord.gg/f6tEKFBd4m)
-
-### Copyright and license
-
-⭐️ [Copyright 2023 Simmmple ](https://www.simmmple.com/?ref=readme-horizon)
-
-📄 [Horizon UI License](https://www.simmmple.com/licenses?ref=readme-horizon)
+- Email Us: support@deviasio.zendesk.com
