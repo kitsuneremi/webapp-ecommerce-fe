@@ -37,8 +37,8 @@ export const items = [
     )
   },
   {
-    title: 'Account',
-    path: '/account',
+    title: 'Staff',
+    path: '/staff',
     icon: (
       <SvgIcon fontSize="small">
         <UserIcon />

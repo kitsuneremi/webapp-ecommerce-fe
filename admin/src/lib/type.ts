@@ -85,3 +85,16 @@ export type VoucherDetailResponse = {
     status: number,
     usedDate: Date
 }
+
+
+export interface StaffResponse {
+    id: number,
+    code: string,
+    full_name: string,
+    birthday: Date,
+    gender: number,
+    address: string,
+    email: string,
+    phone: string,
+    imageUrl: string
+}
