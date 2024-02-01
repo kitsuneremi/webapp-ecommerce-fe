@@ -11,15 +11,18 @@ const nextConfig = {
             protocol: "https",
           },
           {
-            hostname: "github.com",
+            hostname: "i.ebayimg.com",
             protocol: "https",
           },
           {
-            hostname: "danviet.mediacdn.vn",
+            hostname: "ae01.alicdn.com",
             protocol: "https",
           },
           {
             hostname: "th.bing.com",
+            protocol: "https"
+          },{
+            hostname: "theme.hstatic.net",
             protocol: "https"
           }
         ],
