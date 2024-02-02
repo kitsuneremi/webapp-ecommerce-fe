@@ -24,6 +24,9 @@ const nextConfig = {
           },{
             hostname: "theme.hstatic.net",
             protocol: "https"
+          },{
+            hostname: "product.hstatic.net",
+            protocol: "https"
           }
         ],
       },
