@@ -27,9 +27,9 @@ export default function Navbar() {
                 </div>
                 <div className="flex gap-2 items-center">
                     <Link href={'/register'}>Register</Link>
-                    <div>
+                    <Link href={'/cart'}>
                         <FaCartShopping />
-                    </div>
+                    </Link>
                 </div>
             </div>
             <div className="flex bg-red-500 h-8 items-center overflow-hidden gap-24">
