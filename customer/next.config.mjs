@@ -27,6 +27,9 @@ const nextConfig = {
           },{
             hostname: "product.hstatic.net",
             protocol: "https"
+          },{
+            hostname: "www.gravatar.com",
+            protocol: "https"
           }
         ],
       },
