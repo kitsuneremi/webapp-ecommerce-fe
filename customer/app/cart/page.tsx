@@ -12,6 +12,7 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel"
 import { FaCartShopping } from "react-icons/fa6";
+import Link from 'next/link'
 
 
 const columns: TableProps<CartDetailResponse>['columns'] = [
@@ -88,7 +89,7 @@ export default function Cart() {
     const [listCart, setListCart] = useState<CartDetailResponse[]>([])
 
     return (
-        <div className="flex mt-32 min-h-[calc(100vh-256px)] px-[14%] gap-8 pt-6 flex-col gap-6">
+        <div className="flex mt-32 min-h-[calc(100vh-256px)] px-[14%] pt-6 flex-col gap-6">
             <>
                 <p className="uppercase text-2xl font-bold">giỏ hàng của tôi</p>
                 <div className="flex-grow flex justify-center">
@@ -99,6 +100,19 @@ export default function Cart() {
                             :
                             <p>Giỏ hàng trống, hãy thêm gì đó nhé</p>
                     }
+                </div>
+                <div className='flex flex-col gap-5'>
+                    <div className='flex justify-end gap-5'>
+                        <p className='uppercase text-lg font-bold text-slate-700'>thành tiền</p>
+                        <p className='text-lg font-bold text-slate-700'>1.000.000d</p>
+                    </div>
+
+                    <div className='flex justify-end'><p className='underline'>phiếu giảm giá của tôi</p></div>
+                    <div className='flex justify-end'>
+                        <Link href={'checkouts'}>
+                            <button className='bg-cyan-400 px-4 py-3 font-bold text-slate-200'>THIS IS ORDER</button>
+                        </Link>
+                    </div>
                 </div>
             </>
             {CarouselBox({ title: 'sản phẩm khác' })}
@@ -173,7 +187,6 @@ const CarouselBox = ({ title }: { title: string }) => {
                     </CarouselContent>
                     <CarouselNext />
                 </Carousel>
-
             </div>
         </div>
     )
