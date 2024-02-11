@@ -96,22 +96,22 @@ const B = () => {
                     <div className="w-full h-full grid grid-cols-3 gap-5">
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-around">
-                                <div>
+                                <div className="flex flex-col gap-5">
                                     <p className="font-bold">Váy</p>
-                                    <p>váy hoa</p>
-                                    <p>váy maxi</p>
-                                    <p>váy thêu</p>
-                                    <p>váy abc</p>
-                                    <p>váy hoa</p>
-                                    <p>váy hoa</p>
+                                    <p className="text-slate-500">váy hoa</p>
+                                    <p className="text-slate-500">váy maxi</p>
+                                    <p className="text-slate-500">váy thêu</p>
+                                    <p className="text-slate-500">váy abc</p>
+                                    <p className="text-slate-500">váy hoa</p>
+                                    <p className="text-slate-500">váy hoa</p>
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-5">
                                     <p className="font-bold">Bộ sưu tập</p>
-                                    <p>Red edition</p>
-                                    <p>Day to night</p>
-                                    <p>Party</p>
-                                    <p>Night out</p>
-                                    <p>Date</p>
+                                    <p className="text-slate-500">Red edition</p>
+                                    <p className="text-slate-500">Day to night</p>
+                                    <p className="text-slate-500">Party</p>
+                                    <p className="text-slate-500">Night out</p>
+                                    <p className="text-slate-500">Date</p>
                                 </div>
                             </div>
 
