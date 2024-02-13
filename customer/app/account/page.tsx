@@ -9,13 +9,15 @@ import { DatePicker, Space } from 'antd';
 import axios from 'axios'
 import { baseUrl } from '@/lib/utils'
 import { VoucherResponse } from '@/lib/types';
+import { useParams, useSearchParams } from 'next/navigation';
+import Link from 'next/link'
 
 const filterOption = (input: string, option?: { label: string; value: string }) =>
     (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
 export default function AccountPage() {
-
-    const [panel, setPanel] = useState<number>(4);
+    const params = useSearchParams()
+    const [panel, setPanel] = useState<number>(0);
     const [listVoucher, setListVoucher] = useState<VoucherResponse[]>([])
 
     useEffect(() => {
@@ -23,6 +25,15 @@ export default function AccountPage() {
             setListVoucher(res.data)
         })
     }, [])
+
+    useEffect(() => {
+        let temp = params.get('panel');
+        if(temp){
+            setPanel(Number.parseInt(temp));
+        }else{
+            setPanel(0);
+        }
+    },[params])
 
     const onChange = (value: string) => {
         console.log(`selected ${value}`);
@@ -35,25 +46,25 @@ export default function AccountPage() {
     return (
         <main className="flex min-h-[calc(100vh-128px)] mt-32 justify-between py-24 px-[14%] gap-24">
             <aside className="flex flex-col gap-5 min-w-max">
-                <p className="text-xl font-bold">Trung tâm cá nhân</p>
+                <Link href={'/account?panel=0'}><p className="text-xl font-bold">Trung tâm cá nhân</p></Link>
                 <div className="flex flex-col gap-3">
-                    <p className="text-xl font-bold">- Tài khoản của tôi</p>
-                    <p className="text-slate-500">Thông tin của tôi</p>
-                    <p className="text-slate-500">Sổ địa chỉ</p>
-                    <p className="text-slate-500">Đo lường của tôi</p>
+                <p className="text-xl font-bold">- Tài khoản của tôi</p>
+                <Link href={'/account?panel=1'}><p className={`text-slate-500 ${panel == 1 ? 'text-slate-800 font-bold' : ''}`}>Thông tin của tôi</p></Link>
+                <Link href={'/account?panel=2'}><p className={`text-slate-500 ${panel == 2 ? 'text-slate-800 font-bold' : ''}`}>Sổ địa chỉ</p></Link>
+                <Link href={'/account?panel=3'}><p className={`text-slate-500 ${panel == 3 ? 'text-slate-800 font-bold' : ''}`}>Đo lường của tôi</p></Link>
                 </div>
                 <div className="flex flex-col gap-3">
                     <p className="text-xl font-bold">- Quà tặng của Alice</p>
-                    <p className="text-slate-500">Phiếu giảm giá của tôi</p>
-                    <p className="text-slate-500">Xu của tôi</p>
+                    <Link href={'/account?panel=4'}><p className={`text-slate-500 ${panel == 4 ? 'text-slate-800 font-bold' : ''}`}>Phiếu giảm giá của tôi</p></Link>
+                    <Link href={'/account?panel=5'}><p className={`text-slate-500 ${panel == 5 ? 'text-slate-800 font-bold' : ''}`}>Xu của tôi</p></Link>
                 </div>
                 <div className="flex flex-col gap-3">
                     <p className="text-xl font-bold">- Đơn hàng của tôi</p>
-                    <p className="text-slate-500">Tất cả đơn hàng</p>
-                    <p className="text-slate-500">Đơn hàng đã mua</p>
-                    <p className="text-slate-500">Đơn hàng đã hủy</p>
-                    <p className="text-slate-500">Chưa đánh giá</p>
-                    <p className="text-slate-500">Đã đánh giá</p>
+                    <p className={`text-slate-500 ${panel == 6 ? 'text-slate-800 font-bold' : ''}`}>Tất cả đơn hàng</p>
+                    <p className={`text-slate-500 ${panel == 7 ? 'text-slate-800 font-bold' : ''}`}>Đơn hàng đã mua</p>
+                    <p className={`text-slate-500 ${panel == 8 ? 'text-slate-800 font-bold' : ''}`}>Đơn hàng đã hủy</p>
+                    <p className={`text-slate-500 ${panel == 9 ? 'text-slate-800 font-bold' : ''}`}>Chưa đánh giá</p>
+                    <p className={`text-slate-500 ${panel == 10 ? 'text-slate-800 font-bold' : ''}`}>Đã đánh giá</p>
                 </div>
                 <p className="text-xl font-bold">Đăng xuất</p>
             </aside>
