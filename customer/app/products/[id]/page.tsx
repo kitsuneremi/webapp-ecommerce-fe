@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/carousel"
 import { Progress } from "@/components/ui/progress"
 import { FaCartShopping } from "react-icons/fa6";
-
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { baseUrl } from '@/lib/utils';
+import axios from 'axios';
 
 const options: SelectProps['options'] = [];
 
@@ -31,6 +34,10 @@ const handleChange = (value: string[]) => {
 
 export default function Page() {
 
+  const params = useParams();
+  useEffect(() => {
+    axios.get(`${baseUrl}/products/${params.id}`)
+  },[params])
 
     return (
         <main className='flex flex-col min-h-[calc(100vh-128px)] mt-32 justify-between py-24 px-[14%] gap-24'>
@@ -117,8 +124,6 @@ export default function Page() {
                             </div>
                         </TabsContent>
                     </Tabs>
-
-
                 </div>
             </div>
 
@@ -127,7 +132,7 @@ export default function Page() {
                 <div className='bg-slate-400 bg-opacity-40 py-6 px-[10%] flex'>
                     <div className='w-1/2'>
                         <p>0 lượt đánh giá</p>
-                        <Rate></Rate> 
+                        <Rate disabled></Rate> 
                     </div>
                     <div className='flex-grow flex flex-col gap-3'>
                         <p>Hàng có vừa không?</p>
