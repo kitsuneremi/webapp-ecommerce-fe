@@ -4,9 +4,6 @@ import Link from 'next/link'
 import { useState, useRef } from "react"
 import { FaCartShopping } from "react-icons/fa6";
 export default function Navbar() {
-
-
-
     return (
         <div className="fixed bg-white top-0 w-screen">
             <div className="flex items-center h-24 justify-between w-full px-[14%]">
@@ -83,8 +80,6 @@ const HeaderMenuButton = ({
 const B = () => {
 
     const [showMenuDropdown, setShowMenuDropdown] = useState<{ menu: boolean, button: boolean }>({ button: false, menu: false })
-    const buttonRef = useRef<HTMLButtonElement>();
-    const menuRef = useRef<HTMLDivElement>();
     return (
         <>
             <button className={``} onMouseEnter={() => { setTimeout(() => setShowMenuDropdown({ button: true, menu: false }), 200) }} onMouseOut={() => { setTimeout(() => setShowMenuDropdown(prev => { return { button: false, menu: prev.menu } }), 200) }}>Danh mục</button>

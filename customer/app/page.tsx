@@ -36,7 +36,7 @@ export default function Home() {
       }
         plugins={[
           Autoplay({
-            delay: 2000,
+            delay: 4000,
           }),
         ]}
         className="w-full">
@@ -92,9 +92,9 @@ const CarouselBox = ({ title }: { title: string }) => {
             <FaCartShopping />
           </div>
         </div>
-        <div className="">
-          <p>Ella fronta dress</p>
-          <p>790.000d</p>
+        <div className="mt-3">
+          <p className="text-lg font-semibold">Ella fronta dress</p>
+          <p className="text-slate-500 text-sm">790.000d</p>
         </div>
       </div>
     )
@@ -114,9 +114,9 @@ const CarouselBox = ({ title }: { title: string }) => {
             <p className="text-xl uppercase">Xem nhanh</p>
           </div>
         </div>
-        <div className="">
-          <p>Ella fronta dress</p>
-          <p>790.000d</p>
+        <div className="mt-3">
+          <p className="text-lg font-semibold">Ella fronta dress</p>
+          <p className="text-slate-500 text-sm">790.000d</p>
         </div>
       </div>
     )
