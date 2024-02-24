@@ -64,6 +64,11 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+
+  .table-border{
+    border: 1px solid rgb(94, 94, 94);
+    border-collapse: collapse;
+  }
 }
  
 @layer base {

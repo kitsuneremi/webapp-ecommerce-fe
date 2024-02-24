@@ -7,11 +7,13 @@ import { storage } from "../lib/firebase";
 import { v4 as uuid } from 'uuid'
 import { useDropzone } from 'react-dropzone'
 import axios from "axios";
-import { Divider, Input as AntInput, Select as AntSelect, Space, Button as AntButton, Radio, RadioGroupProps, Select, Button, Input, Slider } from 'antd/lib';
+import { Divider, Input as AntInput, Select as AntSelect, Space, Button as AntButton, Radio, RadioGroupProps, Select, Button, Input, Slider, ColorPicker, InputNumber } from 'antd/lib';
 import { FaPlus } from "react-icons/fa6";
 import { Layout as DashboardLayout } from '../layouts/dashboard/layout';
 import { useToast } from "@chakra-ui/react";
 import { Textarea } from "@/components/ui/textarea"
+import { makeid } from "../lib/functional";
+import { BrandResponse, CategoryResponse, ColorResponse, MaterialResponse, ProductResponse, SizeResponse, StyleResponse } from "../lib/type";
 
 
 let index = 0;
@@ -22,37 +24,36 @@ const columnData = [
         accessor: "id"
     },
     {
-        Header: "name",
+        Header: "tên",
         accessor: "name"
     },
     {
-        Header: "category",
+        Header: "phân loại",
         accessor: "category"
     },
     {
-        Header: "imageUrl",
-        accessor: "imageUrl"
+        Header: "ảnh",
+        accessor: "image"
     },
     {
-        Header: "description",
+        Header: "mô tả",
         accessor: "description"
     },
     {
-        Header: "action",
+        Header: "hành động",
         accessor: "action"
     }
 ]
 
-export default function ProductPage() {
+export default function ProductPage(props) {
 
-    const [data, setData] = useState<any[]>([])
-    const [listCateGory, setListCategory] = useState<any[]>([])
+    const [data, setData] = useState<ProductResponse[]>([])
 
     const [panel, setPanel] = useState<number>(0);
 
     // // search sản phẩm
     const [searchValue, setSearchValue] = useState<string>("")
-    const [searchResult, setSearchResult] = useState<any[]>([])
+    const [searchResult, setSearchResult] = useState<ProductResponse[]>([])
     const [searchStatusValue, setSearchStatusValue] = useState<string>("1")
 
     useEffect(() => {
@@ -68,43 +69,120 @@ export default function ProductPage() {
     // // add sản phẩm
     const [addModalNameValue, setAddModalNameValue] = useState<string>("")
     const [addModalDesValue, setAddModalDesValue] = useState<string>("")
-    const [addModalCateValue, setAddModalCateValue] = useState<number>(-1)
     const [imageFile, setImageFile] = useState<File>()
-    // // màu sắc
-    const [selectedColors, setSelectedColors] = useState<any[]>([]);
-    const [listColor, setListColor] = useState<string[]>(['blue', 'red']);
-    const [filteredColorOptions, setFilteredColorOptions] = useState<string[]>([]);
+
+    // màu sắc
+    const [selectedColors, setSelectedColors] = useState<ColorResponse[]>([]);
+    const [listColor, setListColor] = useState<ColorResponse[]>([]);
+    const [addMoreColor, setAddMoreColor] = useState<string>('#1677ff');
+    const [filteredColorOptions, setFilteredColorOptions] = useState<ColorResponse[]>([]);
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/color').then(res => {
+            setListColor(res.data);
+        })
+    }, [])
 
     useEffect(() => {
         setFilteredColorOptions(listColor.filter((o) => !selectedColors.includes(o)));
     }, [listColor, selectedColors])
 
-    const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
-    const [listMaterial, setListMaterial] = useState<string[]>(['vải', 'da']);
-    const [filteredMaterialOptions, setFilteredMaterialOptions] = useState<string[]>([]);
-
-    useEffect(() => {
-        setFilteredMaterialOptions(listMaterial.filter((o) => !selectedMaterials.includes(o)));
-    }, [listMaterial, selectedMaterials])
-
-    const [addMoreColor, setAddMoreColor] = useState<string>('');
-    const [addMoreMaterial, setAddMoreMaterial] = useState<string>('')
-    const addMoreColorInputRef = useRef<HTMLInputElement>(null);
-    const addMoreMaterialInputRef = useRef<HTMLInputElement>(null);
-
     const addColorItem = (e) => {
         e.preventDefault();
-        setListColor([...listColor, addMoreColor || `New item ${index++}`]);
+        axios.post('http://localhost:8080/api/v1/color', {
+            name: addMoreColor
+        }).then(res => {
+            setListColor([...listColor, res.data])
+        })
         setAddMoreColor('');
-        setTimeout(() => {
-            // @ts-ignore
-            addMoreColorInputRef.current?.focus();
-        }, 0);
     };
+
+    // size
+    const [selectedSizes, setSelectedSizes] = useState<SizeResponse[]>([]);
+    const [listSizes, setListSizes] = useState<SizeResponse[]>([]);
+    const [addMoreSize, setAddMoreSize] = useState<string>("");
+    const [filteredSizesOptions, setFilteredSizesOptions] = useState<SizeResponse[]>([]);
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/size').then(res => {
+            setListSizes(res.data);
+        })
+    }, [])
+
+    const addSizeItem = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8080/api/v1/size', {
+            name: addMoreSize
+        }).then(res => {
+            setListSizes([...listSizes, res.data])
+        })
+        setAddMoreSize('');
+    };
+
+    useEffect(() => {
+        setFilteredColorOptions(listColor.filter((o) => !selectedColors.includes(o)));
+    }, [listColor, selectedColors])
+
+
+    //style
+    const [selectedStyle, setSelectedStyle] = useState<string>();
+    const [listStyle, setListStyle] = useState<StyleResponse[]>([])
+    const [addMoreStyle, setAddMoreStyle] = useState<string>("");
+
+    const addStyleItem = (e) => {
+        e.preventDefault();
+    }
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/style').then(res => {
+            setListStyle(res.data)
+        })
+    }, [])
+
+    // catergory
+    const [selectedCategory, setSelectedCategory] = useState<string>();
+    const [addMoreCategory, setAddMoreCategory] = useState<string>("");
+    const [listCateGory, setListCategory] = useState<CategoryResponse[]>([])
+
+    useEffect(() => {
+        const prefetch = async () => {
+            const data = await fetch('http://localhost:8080/api/v1/category', {
+                method: 'GET'
+            }).then(res => { return res.json() })
+            setListCategory(data);
+        }
+        prefetch();
+    }, [])
+
+    const addCategoryItem = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8080/api/v1/category', {
+            name: addMoreCategory
+        }).then(res => {
+            setListCategory([...listCateGory, res.data]);
+        })
+        setAddMoreCategory("");
+    }
+
+    // material
+    const [selectedMaterials, setSelectedMaterials] = useState<string>();
+    const [listMaterial, setListMaterial] = useState<MaterialResponse[]>([]);
+    const [addMoreMaterial, setAddMoreMaterial] = useState<string>('')
+    const [filteredMaterialOptions, setFilteredMaterialOptions] = useState<MaterialResponse[]>([]);
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/material').then(res => {
+            setListMaterial(res.data)
+        })
+    }, [])
 
     const addMaterialItem = (e) => {
         e.preventDefault();
-        setListMaterial([...listMaterial, addMoreColor || `New item ${index++}`]);
+        axios.post('http://localhost:8080/api/v1/material', {
+            name: addMoreMaterial
+        }).then(res => {
+            setListMaterial([...listMaterial, res.data])
+        })
         setAddMoreColor('');
         setTimeout(() => {
             // @ts-ignore
@@ -112,21 +190,61 @@ export default function ProductPage() {
         }, 0);
     };
 
+    // brand
+    const [selectedBrand, setSelectedBrand] = useState<string>();
+    const [addMoreBrand, setAddMoreBrand] = useState<string>("");
+    const [listBrand, setListBrand] = useState<BrandResponse[]>([]);
+
+    useEffect(() => {
+        axios.get('http://localhost:8080/api/v1/brand').then(res => {
+            setListBrand(res.data)
+        })
+    }, [])
+
+    const addBrandItem = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8080/api/v1/brand', {
+            name: addMoreBrand
+        }).then(res => {
+            setListBrand([...listBrand, res.data])
+        })
+        setAddMoreBrand('');
+    }
+
+    const addMoreColorInputRef = useRef<HTMLInputElement>(null);
+    const addMoreMaterialInputRef = useRef<HTMLInputElement>(null);
+
     const [matrix, setMatrix] = useState<any[]>();
+
+    const ChangeMatrixPrice = ({ targetCol, targetRow, value }: { value: string, targetCol: number, targetRow: number }) => {
+        setMatrix(prev => {
+            const newMatrix = prev.map(row => ({ ...row }));
+            newMatrix[targetCol].sizes[targetRow].price = value;
+            return newMatrix;
+        });
+    }
+    const ChangeMatrixQuantity = ({ targetCol, targetRow, value }: { value: string, targetCol: number, targetRow: number }) => {
+        setMatrix(prev => {
+            const newMatrix = prev.map(row => ({ ...row }));
+            newMatrix[targetCol].sizes[targetRow].quantity = value;
+            return newMatrix;
+        });
+    }
+
 
 
     useEffect(() => {
         setMatrix(selectedColors.map((color) => ({
             color: color,
-            materials: selectedMaterials.map((mat) => {
+            sizes: selectedSizes.map((size) => {
                 return {
-                    material: mat,
+                    size: size,
                     price: 0,
                     quantity: 0,
                 }
             })
         })))
-    }, [selectedMaterials, selectedColors])
+    }, [selectedSizes, selectedColors])
 
     const handleInputChange = (index, key, value) => {
         setMatrix((prev) => {
@@ -155,7 +273,7 @@ export default function ProductPage() {
 
     useEffect(() => {
         const prefetch = async () => {
-            const data = await fetch('http://localhost:8080/api/v1/product?page=0&size=5', {
+            const data = await fetch('http://localhost:8080/api/v1/product', {
                 method: 'GET'
             }).then(res => { return res.json() })
             setData(RemodelData(data))
@@ -163,41 +281,21 @@ export default function ProductPage() {
         prefetch();
     }, [])
 
-    useEffect(() => {
-        const prefetch = async () => {
-            const data = await fetch('http://localhost:8080/api/v1/category?page=0&size=50', {
-                method: 'GET'
-            }).then(res => { return res.json() })
-            setListCategory(data);
-        }
-        prefetch();
-    }, [])
 
-    /**
-     * lấy vào mảng data trả từ be và sửa lại để hiện dc trên table
-     * @param {Product[]} list 
-     * @returns {Table[]}
-     */
     const RemodelData = (list) => {
         let temp = [];
         list.map(item => (
             // @ts-ignore
-            temp.push({ ...item, id: [item.id, false], imageUrl: { value: item.imageUrl ? item.imageUrl : "", customElement: generateCustomElement(item.imageUrl, <p>missing!</p>, <img src={item.imageUrl} alt="" />) } })
+            temp.push({ ...item, id: item.id, imageUrl: { value: item.imageUrl ? item.imageUrl : "", customElement: generateCustomElement(item.imageUrl, <p>missing!</p>, <img src={item.imageUrl} alt="" />) } })
         ))
         return temp;
     }
 
     const handleAddProduct = () => {
-        if (imageFile) {
+        if (!imageFile) {
             toast({
                 duration: 3000,
                 title: "missing image",
-                status: "error",
-            })
-        } else if (addModalCateValue == -1) {
-            toast({
-                duration: 3000,
-                title: "missing category",
                 status: "error",
             })
         } else if (addModalNameValue.trim().length === 0) {
@@ -210,19 +308,40 @@ export default function ProductPage() {
             const imageUrl = `/product/image/${uuid()}`
             const productImageStorageRef = ref(storage, imageUrl)
 
-
+            let temp = [];
+            matrix.map(row => {
+                row.sizes.map((val, index) => {
+                    temp.push({
+                        code: makeid(),
+                        imageUrl: imageUrl,
+                        price: val.price,
+                        barcode: makeid() + index,
+                        color: row.color,
+                        size: val.size,
+                        quantity: val.quantity
+                    })
+                })
+                console.log(row.sizes);
+            });
             const data = {
-                id: 0,
+                code: makeid(),
                 name: addModalNameValue,
+                material: selectedMaterials,
+                style: selectedStyle,
+                brand: selectedBrand,
                 description: addModalDesValue,
-                category: addModalCateValue,
-                imageUrl: imageUrl
+                category: selectedCategory,
+                imageUrl: imageUrl,
+                lstProductDetails: temp
             }
+
+
             axios.post('http://localhost:8080/api/v1/product', data).then(
                 res => {
                     if (imageFile) {
                         uploadBytes(productImageStorageRef, imageFile);
-                    }
+                    };
+
                     toast({
                         duration: 3000,
                         title: res.data.title,
@@ -235,7 +354,7 @@ export default function ProductPage() {
 
     return (
         <DashboardLayout>
-            <div className="">
+            <div className="h-fit overflow-auto">
                 <div className="w-full flex mb-3 relative after:absolute after:w-full after:bottom-0 after:left-0 after:h-[1px] after:bg-slate-600 after:bg-opacity-35">
                     <button onClick={() => { setPanel(0) }} className={`px-5 py-3 text-sm font-semibold h-full bg-slate-100 ${panel === 0 ? 'bg-slate-200 text-cyan-500 relative after:absolute after:w-full after:h-[2px] after:bottom-0 after:left-0 after:bg-cyan-500' : ''}`}>
                         Danh sách sản phẩm
@@ -247,228 +366,391 @@ export default function ProductPage() {
                 {panel == 0 &&
                     <div className="px-6">
                         <div className="mb-5">
-                            <div>
-                                <div className="flex gap-3 bg-slate-100">
-                                    <Input placeholder="keyword" value={searchValue} onChange={e => { setSearchValue(e.target.value) }} />
-                                    <Button onClick={() => { setPanel(1) }}>Thêm sản phẩm</Button>
-                                </div>
+                            <div className="mt-5">
                                 {/* tìm kiếm theo giá, chất liệu, ... */}
-                                <div className="grid grid-cols-3 grid-flow-row gap-3 px-3">
+                                <div className="grid grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 grid-flow-row gap-3 px-3">
                                     <div>
-                                        <p>trạng thái</p>
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">trạng thái</p>
                                         <Radio.Group onChange={e => setSearchStatusValue(e.target.value)} value={searchStatusValue}>
                                             <Radio value='1'>Đang bán</Radio>
                                             <Radio value='2'>đã ngừng</Radio>
                                             <Radio value='3'>abc</Radio>
                                         </Radio.Group>
                                     </div>
-                                    <div>
-                                        <p>Phân loại</p>
-                                        <Select placeholder='Select option'>
+                                    <div className="my-2">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">Phân loại</p>
+                                        <Select className="w-full mt-1" placeholder='Select option'>
                                             <option value='option1'>Option 1</option>
                                             <option value='option2'>Option 2</option>
                                             <option value='option3'>Option 3</option>
                                         </Select>
                                     </div>
-                                    <div>
-                                        <p>Nhãn Hàng</p>
-                                        <Select placeholder='Select option'>
+                                    <div className="my-2">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">Nhãn Hàng</p>
+                                        <Select className="w-full mt-1" placeholder='Select option'>
                                             <option value='option1'>Option 1</option>
                                             <option value='option2'>Option 2</option>
                                             <option value='option3'>Option 3</option>
                                         </Select>
                                     </div>
-                                    <div>
-                                        <p>Chất liệu</p>
-                                        <Select placeholder='Select option'>
+                                    <div className="my-2">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">Chất liệu</p>
+                                        <Select className="w-full mt-1" placeholder='Select option'>
                                             <option value='option1'>Option 1</option>
                                             <option value='option2'>Option 2</option>
                                             <option value='option3'>Option 3</option>
                                         </Select>
                                     </div>
-                                    <div>
-                                        <p>Kích cỡ</p>
-                                        <Select placeholder='Select option'>
+                                    <div className="my-2">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">Kích cỡ</p>
+                                        <Select className="w-full mt-1" placeholder='Select option'>
                                             <option value='option1'>Option 1</option>
                                             <option value='option2'>Option 2</option>
                                             <option value='option3'>Option 3</option>
                                         </Select>
                                     </div>
-                                    <div className="flex flex-col justify-between">
-                                        <p>Khoảng giá</p>
-                                        <Slider range={{ draggableTrack: true }} defaultValue={[20, 50]} />;
+                                    <div className="flex my-2 flex-col justify-between">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">Khoảng giá</p>
+                                        <Slider className="w-full mt-1" range={{ draggableTrack: true }} defaultValue={[20, 50]} />
                                         <div></div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="flex gap-3 my-5 bg-slate-100">
+                                <Input placeholder="nhập để tìm kiếm" value={searchValue} onChange={e => { setSearchValue(e.target.value) }} />
+                                <Button onClick={() => { setPanel(1) }}>Thêm sản phẩm</Button>
+                            </div>
                         </div>
 
-                        <CheckTable columnsData={columnData} tableData={searchResult.length > 0 && searchValue.trim().length > 0 ? searchResult : data} />
+                        {/* {(searchResult.length > 0 && searchValue.trim().length > 0) ? <CheckTable columnsData={columnData} tableData={searchResult} /> : <CheckTable columnsData={columnData} tableData={data} />} */}
+
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-gray-800">
+                                    {columnData.map((column, index) => {
+                                        return (
+                                            <th scope="col" className="px-6 py-3" key={index}>{column.Header}</th>
+                                        )
+                                    })}
+                                </tr>
+                            </thead>
+                            <tbody className="">
+                                {
+                                    data.map((row, index) => {
+                                        return (
+                                            <tr key={index} className="border-b border-slate-400">
+                                                <th scope="row" className="text-center px-6 py-4">{row.id}</th>
+                                                <td className="text-center px-6 py-4">
+                                                    {row.name}
+                                                </td>
+                                                <td className="text-center px-6 py-4">
+                                                    {row.category.name}
+                                                </td>
+                                                <td className="text-center px-6 py-4">
+                                                    <img className="max-w-24 aspect-auto" src={row.imageUrl} />
+                                                </td>
+                                                <td className="text-center px-6 py-4">
+                                                    {row.description}
+                                                </td>
+                                                <td className="text-center flex justify-center px-6 py-4">
+                                                    <div className="flex gap-2 items-center">
+                                                        <button className="px-3 py-1 rounded-md bg-blue-600 text-white font-semibold" onClick={() => {redirect(`/product/${row.id}`)}}>Sửa</button>
+                                                        <button className="px-3 py-1 rounded-md bg-red-600 text-white font-semibold" onClick={() => {axios.delete(`http://localhost:8080/api/v1/product/${row.id}`)}}>Xóa</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 }
 
                 {
                     panel == 1 &&
-                    <div className="px-6">
-                        <p>Thông tin cơ bản</p>
-                        <div className="w-full flex flex-col gap-3">
-                            <div className="flex flex-col gap-3">
-                                <p>tên sản phẩm</p>
-                                <input className="w-full text-xl border-[1px] p-2 border-slate-400 focus:outline-none focus:border-cyan-500 rounded-3xl" type="text" value={addModalNameValue} onChange={e => { setAddModalNameValue(e.target.value) }} />
-                            </div>
-                            <div className="flex flex-col gap-3">
-                                <p className="font-bold">upload ảnh</p>
-                                <div className="flex h-24 items-center justify-center border-[1px] border-slate-500" {...getRootProps()}>
-                                    <input {...getInputProps()} />
-                                    {
-                                        isDragActive ?
-                                            <p>Thả</p> :
-                                            <p>bấm để chọn hoặc kéo thả ảnh vào đây</p>
-                                    }
+                    <div className="px-3 flex flex-col gap-3">
+                        <div className="p-3 bg-slate-200 shadow-lg">
+                            <p className="text-slate-600 font-semibold">Thông tin cơ bản</p>
+                            <div className="flex gap-5">
+                                <div className="w-1/2 flex flex-col gap-3">
+                                    <div className="flex flex-col gap-3">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">tên sản phẩm</p>
+                                        <input className="w-full text-sm border-[1px] px-2 py-1 border-slate-400 focus:outline-none focus:border-cyan-500 rounded-3xl" placeholder="nhập tên đại diện sản phẩm" type="text" value={addModalNameValue} onChange={e => { setAddModalNameValue(e.target.value) }} />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="text-sm mb-1 font-semibold text-slate-600">mô tả chi tiết</p>
+                                        <Textarea
+                                            value={addModalDesValue}
+                                            onChange={e => { setAddModalDesValue(e.target.value) }}
+                                            placeholder='điền mô tả sản phẩm tại đây'
+                                        />
+                                    </div>
+                                </div>
+                                <div className="w-1/2 flex flex-col gap-3">
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">upload ảnh</p>
+                                    <div className="flex h-36 items-center rounded-lg justify-center border-[1px] border-dashed border-slate-500" {...getRootProps()}>
+                                        <input {...getInputProps()} />
+                                        {
+                                            isDragActive ?
+                                                <p className="text-sm text-slate-600">Thả</p> :
+                                                imageFile ? <img className="h-full aspect-auto" src={URL.createObjectURL(imageFile)}></img>  :<p className="text-sm text-slate-600">bấm để chọn hoặc kéo thả ảnh vào đây</p>
+                                        }
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <p>des</p>
-                                <Textarea
-                                    value={addModalDesValue}
-                                    onChange={e => { setAddModalDesValue(e.target.value) }}
-                                    placeholder='Here is a sample placeholder'
-                                />
+                        </div>
+
+
+
+
+
+
+
+                        <div className="p-3 bg-slate-200 shadow-lg">
+                            <p className="text-slate-600 font-semibold">thông tin chi tiết</p>
+                            <div className=" grid grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1 gap-2">
+
+
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">phân loại</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn phân loại"
+                                        value={selectedCategory}
+                                        onChange={setSelectedCategory}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <Space style={{ padding: '0 8px 4px' }}>
+                                                    <AntInput
+                                                        placeholder="Nhập tên phân loại"
+                                                        value={addMoreCategory}
+                                                        onChange={e => { setAddMoreCategory(e.target.value) }}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                    />
+                                                    <AntButton type="text" icon={<FaPlus />} onClick={addCategoryItem}>
+                                                        Thêm
+                                                    </AntButton>
+                                                </Space>
+                                            </>
+                                        )}
+                                        options={listCateGory.map((category) => ({
+                                            value: category.id,
+                                            label: category.name,
+                                        }))}
+                                    />
+                                </div>
+
+
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">Chất liệu</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn chất liệu"
+                                        value={selectedMaterials}
+                                        onChange={setSelectedMaterials}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <Space style={{ padding: '0 8px 4px' }}>
+                                                    <AntInput
+                                                        placeholder="Nhập tên chất liệu"
+                                                        //@ts-ignore
+                                                        ref={addMoreMaterialInputRef}
+                                                        value={addMoreMaterial}
+                                                        onChange={e => { setAddMoreMaterial(e.target.value) }}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                    />
+                                                    <AntButton type="text" icon={<FaPlus />} onClick={addMaterialItem}>
+                                                        Thêm
+                                                    </AntButton>
+                                                </Space>
+                                            </>
+                                        )}
+                                        options={listMaterial.map((material) => ({
+                                            value: material.id,
+                                            label: material.name,
+                                        }))}
+                                    />
+                                </div>
+
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">Kiểu dáng</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn kiểu dáng"
+                                        value={selectedStyle}
+                                        onChange={setSelectedStyle}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <Space style={{ padding: '0 8px 4px' }}>
+                                                    <AntInput
+                                                        placeholder="Nhập tên kiểu dáng"
+                                                        value={addMoreStyle}
+                                                        onChange={e => { setAddMoreStyle(e.target.value) }}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                    />
+                                                    <AntButton type="text" icon={<FaPlus />} onClick={addStyleItem}>
+                                                        Thêm
+                                                    </AntButton>
+                                                </Space>
+                                            </>
+                                        )}
+                                        options={listStyle.map((style) => ({
+                                            value: style.id,
+                                            label: style.name,
+                                        }))}
+                                    />
+                                </div>
+
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">Nhãn hàng</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn nhãn hàng"
+                                        value={selectedBrand}
+                                        onChange={setSelectedBrand}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <Space style={{ padding: '0 8px 4px' }}>
+                                                    <AntInput
+                                                        placeholder="Nhập tên nhãn hàng"
+                                                        value={addMoreBrand}
+                                                        onChange={e => { setAddMoreBrand(e.target.value) }}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                    />
+                                                    <AntButton type="text" icon={<FaPlus />} onClick={addBrandItem}>
+                                                        Thêm
+                                                    </AntButton>
+                                                </Space>
+                                            </>
+                                        )}
+                                        options={listBrand.map((brand) => ({
+                                            value: brand.id,
+                                            label: brand.name,
+                                        }))}
+                                    />
+                                </div>
+
                             </div>
                         </div>
 
 
-                        <p>thông tin chi tiết</p>
-                        <div>
-                            <div className="flex flex-col gap-2">
-                                <p>category</p>
-                                <Select placeholder='Select option' defaultValue={-1} onChange={e => { setAddModalCateValue(e) }}>
-                                    {listCateGory.map((cate, index) => {
-                                        return (
-                                            <option key={index} value={cate.id}>{cate.name}</option>
-                                        )
-                                    })}
-                                    <option value={-1} onClick={() => { redirect('/category/add') }}>add new</option>
-                                </Select>
+
+
+
+
+                        <div className="p-3 bg-slate-200 shadow-lg">
+                            <p className="text-slate-600 font-semibold">Thông tin bán hàng</p>
+                            <div className="grid grid-cols-2 gap-4 pb-6">
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">Màu sắc</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn các màu sắc"
+                                        mode="multiple"
+                                        value={selectedColors}
+                                        onChange={setSelectedColors}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                                <Divider style={{ margin: '8px 0' }} />
+                                                <Space style={{ padding: '0 8px 4px' }}>
+                                                    <ColorPicker value={addMoreColor} onChange={e => { setAddMoreColor(e.toHex()) }} showText />
+                                                    <AntButton type="text" icon={<FaPlus />} onClick={addColorItem}>
+                                                        Thêm
+                                                    </AntButton>
+                                                </Space>
+                                            </>
+                                        )}
+                                        options={listColor.map((color) => ({
+                                            value: color.id,
+                                            label: color.name,
+                                        }))}
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-sm mb-1 font-semibold text-slate-600">kích cỡ</p>
+                                    <AntSelect
+                                        className="w-full"
+                                        placeholder="lựa chọn các màu sắc"
+                                        mode="multiple"
+                                        value={selectedSizes}
+                                        onChange={setSelectedSizes}
+                                        dropdownRender={(menu) => (
+                                            <>
+                                                {menu}
+                                            </>
+                                        )}
+                                        options={listSizes.map((size) => ({
+                                            value: size.id,
+                                            label: size.name,
+                                        }))}
+                                    />
+                                </div>
+
+                            </div>
+
+
+                            <div className="w-full">
+                                <table className="w-full table-border">
+                                    <thead>
+                                        <tr className="table-border">
+                                            <th className="table-border">màu sắc</th>
+                                            <th className="table-border">kích cỡ</th>
+                                            <th className="table-border">giá</th>
+                                            <th className="table-border">số lượng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="">
+                                        {
+                                            matrix && matrix.map((row, index) => {
+                                                return (
+                                                    <tr className="table-border" key={index}>
+                                                        <td className="text-center table-border">{row.color}</td>
+                                                        <td className="text-center table-border">
+                                                            {row.sizes.map((value, index) => {
+                                                                return (
+                                                                    <p key={index} className="text-center h-8">{value.size}</p>
+                                                                )
+                                                            })}
+                                                        </td>
+                                                        <td className="border-r border-slate-500 px-3 py-2">
+                                                            {row.sizes.map((value, secondIndex) => {
+                                                                return (
+                                                                    <InputNumber min={1000} defaultValue={1000} suffix="d" className="w-full" value={value ? value.price : 1} onChange={(e) => ChangeMatrixPrice({ value: e.target.value, targetRow: secondIndex, targetCol: index })} key={secondIndex} />
+                                                                )
+                                                            })}
+                                                        </td>
+                                                        <td className="w-20 gap-3 px-3 py-2">
+                                                            {row.sizes.map((value, secondIndex) => {
+                                                                return (
+                                                                    <InputNumber min={1} max={10000} value={value ? value.quantity : 1} className="w-full" onChange={(e) => ChangeMatrixQuantity({ value: e.toString(), targetRow: secondIndex, targetCol: index })} key={secondIndex} />
+                                                                )
+                                                            })}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })
+                                        }
+                                    </tbody>
+                                </table>
+                                {
+                                    matrix.length == 0 && <div className="w-full h-72"></div>
+                                }
                             </div>
                         </div>
 
-                        <p>Thông tin bán hàng</p>
-                        <div className="grid grid-cols-2 gap-4 p-6 bg-white">
-                            <div>
-                                <p>Màu sắc</p>
-                                <AntSelect
-                                    className="w-full"
-                                    // style={{ width:  }}
-                                    placeholder="custom dropdown render"
-                                    mode="multiple"
-                                    value={selectedColors}
-                                    onChange={setSelectedColors}
-                                    dropdownRender={(menu) => (
-                                        <>
-                                            {menu}
-                                            <Divider style={{ margin: '8px 0' }} />
-                                            <Space style={{ padding: '0 8px 4px' }}>
-                                                <AntInput
-                                                    placeholder="Please enter item"
-                                                    // @ts-ignore
-                                                    ref={addMoreColorInputRef}
-                                                    value={addMoreColor}
-                                                    onChange={e => { setAddMoreColor(e.target.value) }}
-                                                    onKeyDown={(e) => e.stopPropagation()}
-                                                />
-                                                <AntButton type="text" icon={<FaPlus />} onClick={addColorItem}>
-                                                    Add color
-                                                </AntButton>
-                                            </Space>
-                                        </>
-                                    )}
-                                    options={filteredColorOptions.map((item) => ({
-                                        value: item,
-                                        label: item,
-                                    }))}
-                                />
-                            </div>
-                            <div>
-                                <p>Chất liệu</p>
-                                <AntSelect
-                                    className="w-full"
-                                    // style={{ width:  }}
-                                    placeholder="custom dropdown render"
-                                    mode="multiple"
-                                    value={selectedMaterials}
-                                    onChange={setSelectedMaterials}
-                                    dropdownRender={(menu) => (
-                                        <>
-                                            {menu}
-                                            <Divider style={{ margin: '8px 0' }} />
-                                            <Space style={{ padding: '0 8px 4px' }}>
-                                                <AntInput
-                                                    placeholder="Please enter item"
-                                                    //@ts-ignore
-                                                    ref={addMoreMaterialInputRef}
-                                                    value={addMoreMaterial}
-                                                    onChange={e => { setAddMoreMaterial(e.target.value) }}
-                                                    onKeyDown={(e) => e.stopPropagation()}
-                                                />
-                                                <AntButton type="text" icon={<FaPlus />} onClick={addMaterialItem}>
-                                                    Add item
-                                                </AntButton>
-                                            </Space>
-                                        </>
-                                    )}
-                                    options={filteredMaterialOptions.map((item) => ({
-                                        value: item,
-                                        label: item,
-                                    }))}
-                                />
-                            </div>
-                        </div>
 
-                        <div className="w-full">
-                            <table className="w-full">
-                                <thead>
-                                    <tr>
-                                        <th>Color</th>
-                                        <th>Material</th>
-                                        <th>Price</th>
-                                        <th>Quantity</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="">
-                                    {
-                                        matrix && matrix.map((row, index) => {
-                                            return (
-                                                <tr key={index}>
-                                                    <td className="text-center h-8">{row.color}</td>
-                                                    <td>
-                                                        {row.materials.map((value, index) => {
-                                                            return (
-                                                                <p key={index} className="text-center h-8">{value.material}</p>
-                                                            )
-                                                        })}
-                                                    </td>
-                                                    <td>
-                                                        {row.materials.map((value, index) => {
-                                                            return (
-                                                                <p key={index} className="text-center h-8">{value.price}</p>
-                                                            )
-                                                        })}
-                                                    </td>
-                                                    <td>
-                                                        {row.materials.map((value, index) => {
-                                                            return (
-                                                                <p key={index} className="text-center h-8">{value.quantity}</p>
-                                                            )
-                                                        })}
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+
+                        <button onClick={handleAddProduct} className="mb-6 px-5 py-2 bg-cyan-500 text-slate-800 rounded-md font-semibold">Thêm sản phẩm</button>
                     </div>
                 }
             </div>

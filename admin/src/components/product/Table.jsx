@@ -46,7 +46,7 @@ export default function CheckTable(props) {
 
     const handleDelete = ({ id }) => {
         console.log(id)
-        // axios.delete(`http://localhost:8080/api/v1/product?id=${id}`)
+        axios.delete(`http://localhost:8080/api/v1/product?id=${id}`)
     }
 
     return (

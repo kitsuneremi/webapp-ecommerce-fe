@@ -44,8 +44,44 @@ export type ProductResponse = {
     id: number,
     imageUrl: string,
     name: string,
-    category: number,
+    category: CategoryResponse,
     description: string,
+    brand: BrandResponse,
+    createdBy: string,
+    createdDate: Date,
+    material: MaterialResponse,
+    style: StyleResponse,
+    lstProductDetails: ProductDetailResponse[]
+}
+
+export type ColorResponse = {
+    id: number,
+    name: string
+}
+
+export type SizeResponse = {
+    id: number,
+    name: string
+}
+
+export type CategoryResponse = {
+    id: number,
+    name: string
+}
+
+export type StyleResponse = {
+    id: number,
+    name: string
+}
+
+export type MaterialResponse = {
+    id: number,
+    name: string
+}
+
+export type BrandResponse = {
+    id: number,
+    name: string
 }
 
 export type CartDetailResponse = {
@@ -63,7 +99,9 @@ export type ProductDetailResponse = {
     quantity: number,
     barcode: string,
     status: number,
-    product: ProductResponse,
+    product: number,
+    color: ColorResponse,
+    size: SizeResponse
     // AttributesValuesResponse attributesValues;
 }
 
