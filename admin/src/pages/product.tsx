@@ -1,8 +1,7 @@
 'use client'
-import CheckTable from "../components/product/Table";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { redirect } from 'next/navigation'
-import { uploadBytes, ref } from 'firebase/storage'
+import { uploadBytes, ref, getDownloadURL } from 'firebase/storage'
 import { storage } from "../lib/firebase";
 import { v4 as uuid } from 'uuid'
 import { useDropzone } from 'react-dropzone'
@@ -14,36 +13,7 @@ import { useToast } from "@chakra-ui/react";
 import { Textarea } from "@/components/ui/textarea"
 import { makeid } from "../lib/functional";
 import { BrandResponse, CategoryResponse, ColorResponse, MaterialResponse, ProductResponse, SizeResponse, StyleResponse } from "../lib/type";
-
-
-let index = 0;
-
-const columnData = [
-    {
-        Header: "id",
-        accessor: "id"
-    },
-    {
-        Header: "tên",
-        accessor: "name"
-    },
-    {
-        Header: "phân loại",
-        accessor: "category"
-    },
-    {
-        Header: "ảnh",
-        accessor: "image"
-    },
-    {
-        Header: "mô tả",
-        accessor: "description"
-    },
-    {
-        Header: "hành động",
-        accessor: "action"
-    }
-]
+import { DataTableDemo } from "../components/product/Table";
 
 export default function ProductPage(props) {
 
@@ -271,13 +241,13 @@ export default function ProductPage(props) {
         multiple: false,
     })
 
+    const prefetch = () => {
+        axios.get('http://localhost:8080/api/v1/product', {
+            method: 'GET'
+        }).then(res => { setData(RemodelData(res.data)) })
+    }
+
     useEffect(() => {
-        const prefetch = async () => {
-            const data = await fetch('http://localhost:8080/api/v1/product', {
-                method: 'GET'
-            }).then(res => { return res.json() })
-            setData(RemodelData(data))
-        }
         prefetch();
     }, [])
 
@@ -323,34 +293,41 @@ export default function ProductPage(props) {
                 })
                 console.log(row.sizes);
             });
-            const data = {
-                code: makeid(),
-                name: addModalNameValue,
-                material: selectedMaterials,
-                style: selectedStyle,
-                brand: selectedBrand,
-                description: addModalDesValue,
-                category: selectedCategory,
-                imageUrl: imageUrl,
-                lstProductDetails: temp
-            }
 
-
-            axios.post('http://localhost:8080/api/v1/product', data).then(
-                res => {
-                    if (imageFile) {
-                        uploadBytes(productImageStorageRef, imageFile);
-                    };
-
-                    toast({
-                        duration: 3000,
-                        title: res.data.title,
-                        status: res.data.status,
+            if (imageFile) {
+                uploadBytes(productImageStorageRef, imageFile).then(res => {
+                    getDownloadURL(productImageStorageRef).then(url => {
+                        console.log(url)
+                        axios.post('http://localhost:8080/api/v1/product', {
+                            code: makeid(),
+                            name: addModalNameValue,
+                            material: selectedMaterials,
+                            style: selectedStyle,
+                            brand: selectedBrand,
+                            description: addModalDesValue,
+                            category: selectedCategory,
+                            imageUrl: url,
+                            lstProductDetails: temp
+                        }).then(
+                            res => {
+                                toast({
+                                    duration: 3000,
+                                    title: res.data.title,
+                                    status: res.data.status,
+                                })
+                            }
+                        )
                     })
-                }
-            )
+                    
+                });
+            };
+
+
+
         }
     }
+
+    
 
     return (
         <DashboardLayout>
@@ -424,7 +401,7 @@ export default function ProductPage(props) {
 
                         {/* {(searchResult.length > 0 && searchValue.trim().length > 0) ? <CheckTable columnsData={columnData} tableData={searchResult} /> : <CheckTable columnsData={columnData} tableData={data} />} */}
 
-                        <table className="w-full">
+                        {/* <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-800">
                                     {columnData.map((column, index) => {
@@ -455,7 +432,7 @@ export default function ProductPage(props) {
                                                 <td className="text-center flex justify-center px-6 py-4">
                                                     <div className="flex gap-2 items-center">
                                                         <button className="px-3 py-1 rounded-md bg-blue-600 text-white font-semibold" onClick={() => {redirect(`/product/${row.id}`)}}>Sửa</button>
-                                                        <button className="px-3 py-1 rounded-md bg-red-600 text-white font-semibold" onClick={() => {axios.delete(`http://localhost:8080/api/v1/product/${row.id}`)}}>Xóa</button>
+                                                        <button className="px-3 py-1 rounded-md bg-red-600 text-white font-semibold" onClick={() => {axios.delete(`http://localhost:8080/api/v1/product/${row.id}`).then(() => {prefetch()}) }}>Xóa</button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -463,7 +440,9 @@ export default function ProductPage(props) {
                                     })
                                 }
                             </tbody>
-                        </table>
+                        </table> */}
+                        
+                        <DataTableDemo data={data} />
                     </div>
                 }
 
@@ -494,7 +473,7 @@ export default function ProductPage(props) {
                                         {
                                             isDragActive ?
                                                 <p className="text-sm text-slate-600">Thả</p> :
-                                                imageFile ? <img className="h-full aspect-auto" src={URL.createObjectURL(imageFile)}></img>  :<p className="text-sm text-slate-600">bấm để chọn hoặc kéo thả ảnh vào đây</p>
+                                                imageFile ? <img className="h-full aspect-auto" src={URL.createObjectURL(imageFile)}></img> : <p className="text-sm text-slate-600">bấm để chọn hoặc kéo thả ảnh vào đây</p>
                                         }
                                     </div>
                                 </div>
@@ -725,14 +704,14 @@ export default function ProductPage(props) {
                                                         <td className="border-r border-slate-500 px-3 py-2">
                                                             {row.sizes.map((value, secondIndex) => {
                                                                 return (
-                                                                    <InputNumber min={1000} defaultValue={1000} suffix="d" className="w-full" value={value ? value.price : 1} onChange={(e) => ChangeMatrixPrice({ value: e.target.value, targetRow: secondIndex, targetCol: index })} key={secondIndex} />
+                                                                    <InputNumber min={1000} defaultValue={1000} suffix="d" className="w-full" value={value ? value.price : 1000} onChange={(e) => ChangeMatrixPrice({ value: e ? e.toString() : 1000, targetRow: secondIndex, targetCol: index })} key={secondIndex} />
                                                                 )
                                                             })}
                                                         </td>
                                                         <td className="w-20 gap-3 px-3 py-2">
                                                             {row.sizes.map((value, secondIndex) => {
                                                                 return (
-                                                                    <InputNumber min={1} max={10000} value={value ? value.quantity : 1} className="w-full" onChange={(e) => ChangeMatrixQuantity({ value: e.toString(), targetRow: secondIndex, targetCol: index })} key={secondIndex} />
+                                                                    <InputNumber min={1} max={10000} defaultValue={1} value={value ? value.quantity : 1} className="w-full" onChange={(e) => ChangeMatrixQuantity({ value: e ? e.toString() : 1, targetRow: secondIndex, targetCol: index })} key={secondIndex} />
                                                                 )
                                                             })}
                                                         </td>
@@ -742,15 +721,10 @@ export default function ProductPage(props) {
                                         }
                                     </tbody>
                                 </table>
-                                {
-                                    matrix.length == 0 && <div className="w-full h-72"></div>
-                                }
                             </div>
                         </div>
 
-
-
-                        <button onClick={handleAddProduct} className="mb-6 px-5 py-2 bg-cyan-500 text-slate-800 rounded-md font-semibold">Thêm sản phẩm</button>
+                        <button onClick={handleAddProduct} className="mb-6 mt-3 px-5 py-2 bg-cyan-500 text-slate-800 rounded-md font-semibold">Thêm sản phẩm</button>
                     </div>
                 }
             </div>

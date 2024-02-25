@@ -1,5 +1,4 @@
 'use client'
-import CheckTable from "../../components/product/Table";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { redirect, useParams } from 'next/navigation'
 import { uploadBytes, ref, getDownloadURL } from 'firebase/storage'
@@ -15,13 +14,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { makeid } from "../../lib/functional";
 import { BrandResponse, CategoryResponse, ColorResponse, MaterialResponse, ProductResponse, SizeResponse, StyleResponse } from "../../lib/type";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox"
+import Barcode from "react-barcode";
+
 
 export default function ProductPage(props) {
 
     const [data, setData] = useState<ProductResponse>()
 
-
     const [imageFile, setImageFile] = useState<File>()
+
+    const [selectedProductDetail, setSelectedProductDetail] = useState<number[]>([]);
 
     // màu sắc
     const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -174,6 +177,14 @@ export default function ProductPage(props) {
         });
     }
 
+    const ChangeMatrixChecked = ({ targetCol, targetRow, value }: { value: string | boolean, targetCol: number, targetRow: number }) => {
+        setMatrix(prev => {
+            const newMatrix = prev.map(row => ({ ...row }));
+            newMatrix[targetCol].sizes[targetRow].checked = value;
+            return newMatrix;
+        });
+    }
+
     useEffect(() => {
         if (selectedSizes.length > 0 && selectedColors.length > 0) {
             const updatedMatrix = selectedColors.map(color => ({
@@ -182,6 +193,9 @@ export default function ProductPage(props) {
                     const productDetail = data.lstProductDetails.find(detail => detail.color.id.toString() == color && detail.size.id.toString() == size);
                     return {
                         size: size,
+                        checked: false,
+                        barcode: productDetail ? productDetail.barcode : makeid(),
+                        id: productDetail ? productDetail.id : -1,
                         price: productDetail ? productDetail.price : 0,
                         quantity: productDetail ? productDetail.quantity : 0,
                     };
@@ -217,7 +231,7 @@ export default function ProductPage(props) {
                 const colorIds: string[] = Array.from(new Set(res.data.lstProductDetails.map(detail => detail.color.id)));
                 setSelectedSizes(sizeIds);
                 setSelectedColors(colorIds);
-                
+
                 setSelectedBrand(res.data.brand)
                 setSelectedCategory(res.data.category)
                 setSelectedMaterials(res.data.material)
@@ -240,7 +254,7 @@ export default function ProductPage(props) {
                 status: "error",
             })
         } else {
-            if(imageFile){
+            if (imageFile) {
 
             }
             const imageUrl = imageFile ? `/product/image/${uuid()}` : data.imageUrl;
@@ -291,6 +305,24 @@ export default function ProductPage(props) {
         }
     }
 
+    const handleExportBarcode = () => {
+        let checked = [];
+        matrix.map(a => {
+            a.sizes.map(value => {
+                if (value.checked == true) {
+                    checked.push(value.id);
+                }
+            })
+        })
+        if(checked.length > 0){
+            axios.get(`http://localhost:8080/api/v1/product/barcode?data=${checked.toString()}`)
+        }else{
+            let t = data.lstProductDetails.map(val => {return val.id});
+            axios.get(`http://localhost:8080/api/v1/product/barcode?data=${t.toString()}`)
+        }
+        
+    }
+
     return (
         <DashboardLayout>
             <div className="h-fit overflow-auto">
@@ -320,7 +352,7 @@ export default function ProductPage(props) {
                                     {
                                         isDragActive ?
                                             <p className="text-sm text-slate-600">Thả</p> :
-                                            data && data.imageUrl ? <GenImage path={data.imageUrl}/> : <p className="text-sm text-slate-600">bấm để chọn hoặc kéo thả ảnh vào đây</p>
+                                            data && data.imageUrl ? <GenImage path={data.imageUrl} /> : <p className="text-sm text-slate-600">bấm để chọn hoặc kéo thả ảnh vào đây</p>
                                     }
                                 </div>
                             </div>
@@ -363,7 +395,7 @@ export default function ProductPage(props) {
                                 />
                             </div>
 
-
+                            q   QQ
                             <div>
                                 <p className="text-sm mb-1 font-semibold text-slate-600">Chất liệu</p>
                                 <AntSelect
@@ -518,50 +550,46 @@ export default function ProductPage(props) {
 
                         </div>
 
-
                         <div className="w-full">
-                            <table className="w-full table-border">
+                            <button className="my-2 px-2 py-1 rounded-md bg-green-600 text-white font-bold text-md" onClick={() => { handleExportBarcode() }}>tải xuống mã vạch</button>
+                            <table className="w-full border-collapse table-border">
                                 <thead>
                                     <tr className="table-border">
-                                        <th className="table-border">màu sắc</th>
-                                        <th className="table-border">kích cỡ</th>
-                                        <th className="table-border">giá</th>
-                                        <th className="table-border">số lượng</th>
+                                        <th className="table-border">#</th>
+                                        <th className="table-border">Color</th>
+                                        <th className="table-border">ID</th>
+                                        <th className="table-border">barcode</th>
+                                        <th className="table-border">Size</th>
+                                        <th className="table-border">Price</th>
+                                        <th className="table-border">Quantity</th>
                                     </tr>
                                 </thead>
-                                <tbody className="">
-                                    {
-                                        matrix && matrix.map((row, index) => {
-                                            return (
-                                                <tr className="table-border" key={index}>
-                                                    <td className="text-center table-border">{row.color}</td>
-                                                    <td className="text-center table-border">
-                                                        {row.sizes.map((value, index) => {
-                                                            return (
-                                                                <p key={index} className="text-center h-8">{value.size}</p>
-                                                            )
-                                                        })}
-                                                    </td>
-                                                    <td className="border-r border-slate-500 px-3 py-2">
-                                                        {row.sizes.map((value, secondIndex) => {
-                                                            return (
-                                                                <InputNumber min={1000} defaultValue={1000} suffix="d" className="w-full" value={value ? value.price : 1} onChange={(e) => ChangeMatrixPrice({ value: e, targetRow: secondIndex, targetCol: index })} key={secondIndex} />
-                                                            )
-                                                        })}
-                                                    </td>
-                                                    <td className="w-20 gap-3 px-3 py-2">
-                                                        {row.sizes.map((value, secondIndex) => {
-                                                            return (
-                                                                <InputNumber min={1} max={10000} value={value ? value.quantity : 1} className="w-full" onChange={(e) => ChangeMatrixQuantity({ value: e.toString(), targetRow: secondIndex, targetCol: index })} key={secondIndex} />
-                                                            )
-                                                        })}
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })
-                                    }
+                                <tbody>
+                                    {matrix && matrix.map((row, rowIndex) => (
+                                        row.sizes.map((value, sizeIndex) => (
+                                            <tr className="table-border" key={`${rowIndex}-${sizeIndex}`}>
+                                                <td className=""><Checkbox className="" value={value.checked} onCheckedChange={value => { ChangeMatrixChecked({ value, targetRow: sizeIndex, targetCol: rowIndex }) }} /></td>
+                                                {sizeIndex === 0 && (
+                                                    <th className="table-border" rowSpan={row.sizes.length}>{row.color}</th>
+                                                )}
+                                                <th className="table-border">{value.id}</th>
+                                                <th className="table-border"><Barcode value={value.barcode} /></th>
+                                                <th className="table-border">{value.size}</th>
+                                                <td className="table-border">
+                                                    <InputNumber min={1000} defaultValue={1000} suffix="d" className="w-full" value={value ? value.price : 1} onChange={(e) => ChangeMatrixPrice({ value: e, targetRow: sizeIndex, targetCol: rowIndex })} />
+                                                </td>
+                                                <td className="table-border">
+                                                    <InputNumber min={1} max={10000} value={value ? value.quantity : 1} className="w-full" onChange={(e) => ChangeMatrixQuantity({ value: e.toString(), targetRow: sizeIndex, targetCol: rowIndex })} />
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ))}
                                 </tbody>
                             </table>
+
+
+
+
                             {
                                 matrix.length == 0 && <div className="w-full h-72"></div>
                             }
