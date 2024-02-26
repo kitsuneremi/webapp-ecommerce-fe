@@ -102,7 +102,6 @@ export type ProductDetailResponse = {
     product: number,
     color: ColorResponse,
     size: SizeResponse
-    // AttributesValuesResponse attributesValues;
 }
 
 export type VoucherResponse = {
@@ -135,4 +134,26 @@ export interface StaffResponse {
     email: string,
     phone: string,
     imageUrl: string
+}
+
+export type PromotionResponse = {
+    id: number,
+    code: number,
+    name: string,
+    value: number,
+    description: string,
+    startDate: Date,
+    endDate: Date,
+    status: number,
+    lstPromotionDetails: PromotionDetailResponse[]
+}
+
+export type PromotionDetailResponse = {
+    id: number,
+    promotion: {
+        id: number,
+        promotion: number,
+        productDetail: number,
+    },
+    productDetails: ProductDetailResponse
 }

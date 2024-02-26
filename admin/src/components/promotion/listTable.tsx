@@ -1,6 +1,6 @@
 "use client"
-
-import * as React from "react"
+import { Tag } from 'antd/lib'
+import {useState, useEffect, useMemo} from "react"
 import {
     CaretSortIcon,
     ChevronDownIcon,
@@ -39,108 +39,133 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { ProductResponse } from "../../lib/type"
-import Link, { redirect } from 'next/navigation'
+import { ProductResponse, PromotionResponse } from "../../lib/type"
+import Link, { redirect, useRouter } from 'next/navigation'
 import axios from "axios"
 
 
-export const columns: ColumnDef<ProductResponse>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <Checkbox
-                //@ts-ignore
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && "indeterminate")
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
-    {
-        accessorKey: "id",
-        header: "id",
-        cell: ({ row }) => (
-            <div className="capitalize">{row.getValue("id")}</div>
-        ),
-    },
-    {
-        accessorKey: "name",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    tên
-                    <CaretSortIcon className="ml-2 h-4 w-4" />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
-    },
-    {
-        accessorKey: "brand",
-        header: () => <div className="text-right">nhãn hàng</div>,
-        cell: ({ row }) => {
-            return <div className="text-right font-medium">{row.getValue("brand").name}</div>
-        },
-    },
-    {
-        accessorKey: "imageUrl",
-        header: () => <div className="text-right">img</div>,
-        cell: ({ row }) => {
-            return <div className="text-right font-medium max-h-16">
-                <img className="h-full aspect-auto" src={row.getValue("imageUrl").value} />
-            </div>
-        },
-    },
-    {
-        id: "hành động",
-        enableHiding: false,
-        header: () => <div className="text-center">hành động</div>,
-        cell: ({ row }) => {
-            return (
-                <div className="flex justify-center">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <DotsHorizontalIcon className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Xóa sản phẩm</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {redirect(`product/${row.getValue('id')}`)}}>Cập nhật sản phẩm</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )
-        },
-    },
-]
-
-export function DataTableDemo({ data }: { data: ProductResponse[] }) {
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+export default function ListTable({ data }: { data: PromotionResponse[] }) {
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
-    const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+    const [rowSelection, setRowSelection] = useState({})
+
+    const router = useRouter();
+
+    const columns: ColumnDef<PromotionResponse>[] = useMemo(() => [
+        {
+            id: "select",
+            header: ({ table }) => (
+                <Checkbox
+                    //@ts-ignore
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
+        {
+            accessorKey: "id",
+            header: "id",
+            cell: ({ row }) => (
+                <div className="capitalize">{row.getValue("id")}</div>
+            ),
+        },
+        {
+            accessorKey: "name",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        tên
+                        <CaretSortIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+        },
+        {
+            accessorKey: "status",
+            header: () => <div className="text-center">trạng thái</div>,
+            cell: ({ row }) => {
+                return <div className='flex justify-center'>{row.getValue("status") == 0 ? row.getValue("endDate") > new Date() ? <Tag color={"red"}>
+                    ĐÃ KẾT THÚC
+                </Tag> : <Tag color={"blue"}>
+                    ĐANG DIỄN RA
+                </Tag> : <Tag color={"yellow"}>
+                    ĐANG TẠM NGƯNG
+                </Tag>}</div>
+            },
+        },
+        {
+            accessorKey: "startDate",
+            header: () => <div className="text-center">ngày bắt đầu</div>,
+            cell: ({ row }) => {
+                return <div className='text-center'>
+                    {row.getValue("startDate")}
+                </div>
+            },
+        },
+        {
+            accessorKey: "endDate",
+            header: () => <div className="text-center">ngày kết thúc</div>,
+            cell: ({ row }) => {
+                return <div className='text-center'>
+                    {row.getValue("endDate")}
+                </div>
+            },
+        },
+        {
+            accessorKey: "value",
+            header: () => <div className="text-center">giá trị giảm</div>,
+            cell: ({ row }) => {
+                return <div className="text-center font-medium max-h-16">
+                    {row.getValue("value")}
+                </div>
+            },
+        },
+        {
+            id: "hành động",
+            enableHiding: false,
+            header: () => <div className="text-center">hành động</div>,
+            cell: ({ row }) => {
+                return (
+                    <div className="flex justify-center">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">mở menu</span>
+                                    <DotsHorizontalIcon className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Xóa sản phẩm</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { router.replace(`promotion?id=${row.getValue('id')}`); }}>Cập nhật sản phẩm</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )
+            },
+        },
+    ],[]);
 
     const table = useReactTable({
         data,
@@ -161,28 +186,8 @@ export function DataTableDemo({ data }: { data: ProductResponse[] }) {
         },
     })
 
-    React.useEffect(() => {
-        console.log(rowSelection)
-    }, [rowSelection])
-
-    const handleExportExcell = () => {
-        const t = data.map(val => { return val.id })
-        let keysArray = [];
-        for (let key in rowSelection) {
-            keysArray.push(Number(key));
-        }
-        if(keysArray.length > 0){
-            axios.get(`http://localhost:8080/api/v1/product/excell?data=${keysArray.toString()}`)
-        }else{
-            axios.get(`http://localhost:8080/api/v1/product/excell?data=${t.toString()}`)
-        }
-        
-    }
-
     return (
         <>
-            <button className="my-2 px-2 py-1 rounded-md bg-green-600 text-white font-bold text-md" onClick={() => { handleExportExcell() }}>xuất excell</button>
-
             <div className="w-full">
                 <div className="flex items-center py-4">
                     <Input

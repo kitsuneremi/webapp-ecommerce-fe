@@ -201,8 +201,6 @@ export default function ProductPage(props) {
         });
     }
 
-
-
     useEffect(() => {
         setMatrix(selectedColors.map((color) => ({
             color: color,
@@ -291,7 +289,6 @@ export default function ProductPage(props) {
                         quantity: val.quantity
                     })
                 })
-                console.log(row.sizes);
             });
 
             if (imageFile) {
@@ -318,7 +315,7 @@ export default function ProductPage(props) {
                             }
                         )
                     })
-                    
+
                 });
             };
 
@@ -327,7 +324,7 @@ export default function ProductPage(props) {
         }
     }
 
-    
+
 
     return (
         <DashboardLayout>
@@ -357,33 +354,33 @@ export default function ProductPage(props) {
                                     <div className="my-2">
                                         <p className="text-sm mb-1 font-semibold text-slate-600">Phân loại</p>
                                         <Select className="w-full mt-1" placeholder='Select option'>
-                                            <option value='option1'>Option 1</option>
-                                            <option value='option2'>Option 2</option>
-                                            <option value='option3'>Option 3</option>
+                                            {listCateGory.map((cate, index) => {
+                                                return <option key={index} value={cate.id}>{cate.name}</option>
+                                            })}
                                         </Select>
                                     </div>
                                     <div className="my-2">
                                         <p className="text-sm mb-1 font-semibold text-slate-600">Nhãn Hàng</p>
                                         <Select className="w-full mt-1" placeholder='Select option'>
-                                            <option value='option1'>Option 1</option>
-                                            <option value='option2'>Option 2</option>
-                                            <option value='option3'>Option 3</option>
+                                            {listBrand.map((brand, index) => {
+                                                return <option key={index} value={brand.id}>{brand.name}</option>
+                                            })}
                                         </Select>
                                     </div>
                                     <div className="my-2">
                                         <p className="text-sm mb-1 font-semibold text-slate-600">Chất liệu</p>
                                         <Select className="w-full mt-1" placeholder='Select option'>
-                                            <option value='option1'>Option 1</option>
-                                            <option value='option2'>Option 2</option>
-                                            <option value='option3'>Option 3</option>
+                                            {listMaterial.map((material, index) => {
+                                                return <option key={index} value={material.id}>{material.name}</option>
+                                            })}
                                         </Select>
                                     </div>
                                     <div className="my-2">
                                         <p className="text-sm mb-1 font-semibold text-slate-600">Kích cỡ</p>
                                         <Select className="w-full mt-1" placeholder='Select option'>
-                                            <option value='option1'>Option 1</option>
-                                            <option value='option2'>Option 2</option>
-                                            <option value='option3'>Option 3</option>
+                                            {listSizes.map((size, index) => {
+                                                return <option key={index} value={size.id}>{size.name}</option>
+                                            })}
                                         </Select>
                                     </div>
                                     <div className="flex my-2 flex-col justify-between">
@@ -399,49 +396,6 @@ export default function ProductPage(props) {
                             </div>
                         </div>
 
-                        {/* {(searchResult.length > 0 && searchValue.trim().length > 0) ? <CheckTable columnsData={columnData} tableData={searchResult} /> : <CheckTable columnsData={columnData} tableData={data} />} */}
-
-                        {/* <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-800">
-                                    {columnData.map((column, index) => {
-                                        return (
-                                            <th scope="col" className="px-6 py-3" key={index}>{column.Header}</th>
-                                        )
-                                    })}
-                                </tr>
-                            </thead>
-                            <tbody className="">
-                                {
-                                    data.map((row, index) => {
-                                        return (
-                                            <tr key={index} className="border-b border-slate-400">
-                                                <th scope="row" className="text-center px-6 py-4">{row.id}</th>
-                                                <td className="text-center px-6 py-4">
-                                                    {row.name}
-                                                </td>
-                                                <td className="text-center px-6 py-4">
-                                                    {row.category.name}
-                                                </td>
-                                                <td className="text-center px-6 py-4">
-                                                    <img className="max-w-24 aspect-auto" src={row.imageUrl} />
-                                                </td>
-                                                <td className="text-center px-6 py-4">
-                                                    {row.description}
-                                                </td>
-                                                <td className="text-center flex justify-center px-6 py-4">
-                                                    <div className="flex gap-2 items-center">
-                                                        <button className="px-3 py-1 rounded-md bg-blue-600 text-white font-semibold" onClick={() => {redirect(`/product/${row.id}`)}}>Sửa</button>
-                                                        <button className="px-3 py-1 rounded-md bg-red-600 text-white font-semibold" onClick={() => {axios.delete(`http://localhost:8080/api/v1/product/${row.id}`).then(() => {prefetch()}) }}>Xóa</button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })
-                                }
-                            </tbody>
-                        </table> */}
-                        
                         <DataTableDemo data={data} />
                     </div>
                 }
