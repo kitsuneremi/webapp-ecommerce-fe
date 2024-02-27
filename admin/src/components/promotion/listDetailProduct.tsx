@@ -39,10 +39,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { ProductDetailResponse, ProductResponse, PromotionResponse } from "../../lib/type"
+import { ProductDetailResponse, ProductResponse, PromotionResponse, Selected } from "../../lib/type"
 import Link, { redirect, useRouter } from 'next/navigation'
 import axios from "axios"
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import { useAppSelector } from '../../redux/storage'
+import { set, updateSelected, toggleChildren } from '../../redux/features/promotion-selected-item'
+import { useDispatch } from "react-redux";
 
 export default function ListTable({ data }: { data: ProductResponse[] }) {
     const [sorting, setSorting] = useState<SortingState>([])
@@ -51,13 +54,52 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
     const [rowSelection, setRowSelection] = useState({})
 
     const [open, setOpen] = useState({});
+    const dispatch = useDispatch();
+
+    const selectedProduct = useAppSelector((state) => state.promotionReducer.value.selected)
+
+    useEffect(() => {
+        let temp: Selected[] = []
+        data.forEach(product => {
+            temp.push(
+                {
+                    id: product.id,
+                    selected: false,
+                    children: product.lstProductDetails.map(proDetail => {
+                        return {
+                            id: proDetail.id,
+                            selected: false
+                        }
+                    })
+                }
+            )
+        });
+        dispatch(set({ value: { selected: temp } }))
+    }, [data, dispatch])
+
+    // useEffect(() => {
+    //     let temp: Selected[] = []
+    //     selectedProduct.map(value => {
+    //         temp.push({
+    //             id: value.id,
+    //             selected: !!rowSelection[value.id],
+    //             children: !!rowSelection[value.id] == false ? value.children : value.children.map(child => {
+    //                 return {
+    //                     id: child.id,
+    //                     selected: true
+    //                 }
+    //             })
+    //         })
+    //     })
+    //     dispatch(set({ value: { selected: temp } }))
+    // }, [dispatch, rowSelection])
 
     const handleToggleOpen = (id) => {
         setOpen((prevOpen) => ({
-          ...prevOpen,
-          [id]: !prevOpen[id] // Nếu đã mở thì đóng, và ngược lại
+            ...prevOpen,
+            [id]: !prevOpen[id] // Nếu đã mở thì đóng, và ngược lại
         }));
-      };
+    };
 
     const columns: ColumnDef<ProductResponse>[] = useMemo(() => [
         {
@@ -75,8 +117,10 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
             ),
             cell: ({ row }) => (
                 <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    checked={row.getIsSelected() || (selectedProduct.find(value => {
+                        return value.id == row.getValue("id")
+                    })?.selected)}
+                    onCheckedChange={(value) => { row.toggleSelected(!!value); dispatch(updateSelected({ id: row.getValue("id"), selected: !!value })) }}
                     aria-label="Select row"
                 />
             ),
@@ -139,7 +183,7 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
                 </div>
             },
         },
-    ], [open]);
+    ], [dispatch, open, selectedProduct]);
 
     const table = useReactTable({
         data,
@@ -235,7 +279,7 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
                                         </TableRow>
                                         <TableRow data-state={row.getIsSelected() && "selected"}>
                                             {/* @ts-ignore */}
-                                            {open[row.getValue("id")] && <TableCell colSpan={9}><ProductDetailTable data={row.getValue("lstProductDetails")}></ProductDetailTable></TableCell>}
+                                            {open[row.getValue("id")] && <TableCell colSpan={columns.length}><ProductDetailTable targetDataId={row.getValue("id")} selected={row.getIsSelected()} belowData={row.getValue("lstProductDetails")}></ProductDetailTable></TableCell>}
                                         </TableRow>
                                     </>
                                 ))
@@ -283,32 +327,26 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
 
 
 
-const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        []
-    )
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = useState({})
+const ProductDetailTable = ({ belowData, selected, targetDataId }: { targetDataId: number, belowData: ProductDetailResponse[], selected: boolean }) => {
+    const [belowSorting, setBelowSorting] = useState<SortingState>([])
+    const [belowColumnFilters, setBelowColumnFilters] = useState<ColumnFiltersState>([])
+    const [belowColumnVisibility, setBelowColumnVisibility] = useState<VisibilityState>({})
+    const [belowRowSelection, setBelowRowSelection] = useState({})
 
-    const columns: ColumnDef<ProductDetailResponse>[] = useMemo(() => [
+    const selectedProduct = useAppSelector((state) => state.promotionReducer.value.selected)
+
+    const dispatch = useDispatch();
+
+    const belowColumns: ColumnDef<ProductDetailResponse>[] = useMemo(() => [
         {
             id: "select",
             header: ({ table }) => (
-                <Checkbox
-                    //@ts-ignore
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                    aria-label="Select all"
-                />
+                <div></div>
             ),
             cell: ({ row }) => (
                 <Checkbox
                     checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    onCheckedChange={(value) => {row.toggleSelected(!!value); dispatch(toggleChildren({id: row.getValue("id"), parentId: targetDataId, value: !!value}))}}
                     aria-label="Select row"
                 />
             ),
@@ -323,26 +361,21 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
             ),
         },
         {
-            accessorKey: "name",
+            accessorKey: "size",
             header: ({ column }) => {
                 return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        tên
-                        <CaretSortIcon className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div className='text-center'>Kích cỡ</div>
                 )
             },
-            cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+            // @ts-ignore
+            cell: ({ row }) => <div className="text-center lowercase">{row.getValue("size").name}</div>,
         },
         {
-            accessorKey: "brand",
-            header: () => <div className="text-center">nhãn hàng</div>,
+            accessorKey: "color",
+            header: () => <div className="text-center">màu sắc</div>,
             cell: ({ row }) => {
                 // @ts-ignore
-                return <div className="text-center font-medium">{row.getValue("brand")}</div>
+                return <div className="text-center font-medium">{row.getValue("color").name}</div>
             },
         },
         {
@@ -357,24 +390,28 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
         }
     ], []);
 
-    const table = useReactTable({
-        data,
-        columns,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
+    const belowTable = useReactTable({
+        data: belowData,
+        columns: belowColumns,
+        onSortingChange: setBelowSorting,
+        onColumnFiltersChange: setBelowColumnFilters,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
+        onColumnVisibilityChange: setBelowColumnVisibility,
+        onRowSelectionChange: setBelowRowSelection,
         state: {
-            sorting,
-            columnFilters,
-            columnVisibility,
-            rowSelection,
+            sorting: belowSorting,
+            columnFilters: belowColumnFilters,
+            columnVisibility: belowColumnVisibility,
+            rowSelection: belowRowSelection,
         },
     })
+
+    useEffect(() => {
+        belowTable.toggleAllRowsSelected(selected);
+    }, [belowTable, selected])
 
     return (
         <>
@@ -382,7 +419,7 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
                 <div className="rounded-md border">
                     <Table>
                         <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
+                            {belowTable.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => {
                                         return (
@@ -400,8 +437,8 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
                             ))}
                         </TableHeader>
                         <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
+                            {belowTable.getRowModel().rows?.length ? (
+                                belowTable.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
@@ -419,7 +456,7 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={columns.length}
+                                        colSpan={belowColumns.length}
                                         className="h-24 text-center"
                                     >
                                         No results.
@@ -431,23 +468,23 @@ const ProductDetailTable = ({ data }: { data: ProductDetailResponse[] }) => {
                 </div>
                 <div className="flex items-center justify-end space-x-2 py-4">
                     <div className="flex-1 text-sm text-muted-foreground">
-                        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                        {table.getFilteredRowModel().rows.length} row(s) selected.
+                        {belowTable.getFilteredSelectedRowModel().rows.length} of{" "}
+                        {belowTable.getFilteredRowModel().rows.length} row(s) selected.
                     </div>
                     <div className="space-x-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
+                            onClick={() => belowTable.previousPage()}
+                            disabled={!belowTable.getCanPreviousPage()}
                         >
                             Previous
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
+                            onClick={() => belowTable.nextPage()}
+                            disabled={!belowTable.getCanNextPage()}
                         >
                             Next
                         </Button>

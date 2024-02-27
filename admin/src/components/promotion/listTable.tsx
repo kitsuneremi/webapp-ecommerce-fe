@@ -41,8 +41,6 @@ import {
 } from "@/components/ui/table"
 import { ProductResponse, PromotionResponse } from "../../lib/type"
 import Link, { redirect, useRouter } from 'next/navigation'
-import axios from "axios"
-
 
 export default function ListTable({ data }: { data: PromotionResponse[] }) {
     const [sorting, setSorting] = useState<SortingState>([])
@@ -165,7 +163,7 @@ export default function ListTable({ data }: { data: PromotionResponse[] }) {
                 )
             },
         },
-    ],[]);
+    ],[router]);
 
     const table = useReactTable({
         data,

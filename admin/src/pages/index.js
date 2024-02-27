@@ -10,7 +10,6 @@ import { OverviewTasksProgress } from '../sections/overview/overview-tasks-progr
 import { OverviewTotalCustomers } from '../sections/overview/overview-total-customers';
 import { OverviewTotalProfit } from '../sections/overview/overview-total-profit';
 import { OverviewTraffic } from '../sections/overview/overview-traffic';
-
 const now = new Date();
 
 const Page = () => (
@@ -225,7 +224,7 @@ const Page = () => (
 
 Page.getLayout = (page) => (
   <DashboardLayout>
-    {page}
+      {page}
   </DashboardLayout>
 );
 

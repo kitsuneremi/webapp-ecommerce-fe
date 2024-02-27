@@ -138,7 +138,7 @@ export interface StaffResponse {
 
 export type PromotionResponse = {
     id: number,
-    code: number,
+    code: number | string,
     name: string,
     value: number,
     description: string,
@@ -157,3 +157,16 @@ export type PromotionDetailResponse = {
     },
     productDetails: ProductDetailResponse
 }
+
+
+
+type Child = {
+    id: number;
+    selected: boolean;
+};
+
+export type Selected = {
+    id: number;
+    selected: boolean;
+    children: Child[];
+};
