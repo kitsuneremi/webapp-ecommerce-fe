@@ -106,12 +106,21 @@ export type ProductDetailResponse = {
 
 export type VoucherResponse = {
     id: number,
-    code_voucher: string,
+    code: string,
     name: string,
     value: number,
-    quantity: number,
+    target_type: number,
+    discount_type: number,
+    description: string,
+    order_min_value: number,
+    max_discount_value: number,
+    usage_limit: number,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    last_modified_date: Date,
+    last_modified_by: string,
+    status: number,
+
 }
 
 export type VoucherDetailResponse = {

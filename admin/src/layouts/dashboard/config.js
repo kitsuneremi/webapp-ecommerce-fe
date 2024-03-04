@@ -55,6 +55,15 @@ export const items = [
     )
   },
   {
+    title: 'Voucher',
+    path: '/voucher',
+    icon: (
+      <SvgIcon fontSize="small">
+        <CogIcon />
+      </SvgIcon>
+    )
+  },
+  {
     title: 'Login',
     path: '/auth/login',
     icon: (
