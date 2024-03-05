@@ -74,10 +74,10 @@ const VoucherPage = (): JSX.Element => {
                 name: "",
                 description: "",
                 discount_type: "0",
-                max_discount_value: "0",
+                max_discount_value: 0,
                 order_min_value: "0",
                 target_type: "0",
-                usage_limit: "0",
+                usage_limit: 0,
                 value: "0"
             },
             mode: 'all'
@@ -85,24 +85,16 @@ const VoucherPage = (): JSX.Element => {
     )
     const { toast } = useToast();
 
+    const selectedCustomer = useAppSelector(state => state.voucherReducer.value.selected)
+
     const path = useSearchParams();
     const [panel, setPanel] = useState<number>(0);
 
     const [targetVoucher, setTargetVoucher] = useState<VoucherResponse>()
 
     const [data, setData] = useState<VoucherResponse[]>([]);
-    const [listProduct, setListProduct] = useState<ProductResponse[]>([]);
-    const [listCustomer, setListCustomer] = useState<CustomerResponse[]>([]);
-    const [selectedCustomer, setSelectedCustomer] = useState<CustomerResponse[]>([]);
 
-    const [name, setName] = useState<string>("");
-    const [code, setCode] = useState<string>("");
-    const [value, setValue] = useState<number>(0);
-    const [maxDiscount, setMaxDiscount] = useState<number>(0);
-    const [minOrder, setMinOrder] = useState<number>(0);
-    const [maxUsage, setMaxUsage] = useState<number>(0);
-    const [description, setDescription] = useState<string>("");
-    const [discountType, setDiscountType] = useState<number>(0);
+
     const [date, setDate] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date())]);
 
 
@@ -116,10 +108,6 @@ const VoucherPage = (): JSX.Element => {
         })
     }, [])
 
-    useEffect(() => {
-        axios.get(`${baseUrl}/product`).then(res => { setListProduct(res.data) })
-        axios.get(`${baseUrl}/customer`).then(res => { setListCustomer(res.data) })
-    }, [])
 
 
     useEffect(() => {
@@ -134,7 +122,6 @@ const VoucherPage = (): JSX.Element => {
 
 
     const handleSubmitForm = (values) => {
-        console.log(values)
         axios.post(`${baseUrl}/voucher`, {
             code: values.code,
             name: values.name,
@@ -147,47 +134,6 @@ const VoucherPage = (): JSX.Element => {
             endDate: date[1].toDate(),
             lstCustomer: selectedCustomer.map(val => { return val.id }).toString()
         })
-        // if (!date) {
-
-        // } else if (name.trim().length == 0) {
-        //     toast({
-        //         title: 'chưa nhập tên chương trình'
-        //     })
-        // } else if (value.toString().trim().length == 0) {
-        //     toast({
-        //         title: 'đặt mức giảm giá'
-        //     })
-        // } else {
-        //     if (targetVoucher) {
-        //         axios.post(`${baseUrl}/voucher`, {
-        //             status: 0,
-        //             value: value,
-        //             code: makeid(),
-        //             name: name,
-        //             description: description,
-        //             startDate: dayjs(date[0]).toDate(),
-        //             endDate: dayjs(date[1]).toDate(),
-        //         }).then(res => {
-        //             toast({
-        //                 title: res.data.title,
-        //                 description: res.data.des
-        //             })
-        //             if (res.data.status == "Success") {
-        //                 redirect(`/voucher?id=${res.data.data.id}`)
-        //             }
-        //         })
-        //     } else {
-        //         axios.put(`${baseUrl}/voucher`, targetVoucher).then(res => {
-        //             toast({
-        //                 title: res.data.title,
-        //                 description: res.data.des
-        //             })
-        //             if (res.data.status == "Success") {
-        //                 redirect(`/voucher?id=${res.data.data.id}`)
-        //             }
-        //         })
-        //     }
-        // }
     }
 
 
@@ -344,7 +290,7 @@ const VoucherPage = (): JSX.Element => {
 
                             </div>
                             <div className='flex-grow'>
-                                <ListCustomer data={listCustomer} />
+                                <ListCustomer />
                             </div>
                         </div>
                     }
