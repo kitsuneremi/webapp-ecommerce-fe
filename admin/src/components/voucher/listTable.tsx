@@ -1,6 +1,6 @@
 "use client"
 import { Tag } from 'antd/lib'
-import {useState, useEffect, useMemo} from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
     CaretSortIcon,
     ChevronDownIcon,
@@ -41,6 +41,8 @@ import {
 } from "@/components/ui/table"
 import { VoucherResponse } from "../../lib/type"
 import Link, { redirect, useRouter } from 'next/navigation'
+import axios from 'axios'
+import { baseUrl } from '../../lib/functional'
 
 export default function ListTable({ data }: { data: VoucherResponse[] }) {
     const [sorting, setSorting] = useState<SortingState>([])
@@ -155,7 +157,12 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Xóa</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                    let t = confirm('xác nhận xóa');
+                                    if (t) {
+                                        axios.delete(`${baseUrl}/voucher/${row.getValue("id")}`)
+                                    }
+                                }}>Xóa</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { router.replace(`voucher?id=${row.getValue('id')}`); }}>Cập nhật</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -163,7 +170,7 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
                 )
             },
         },
-    ],[router]);
+    ], [router]);
 
     const table = useReactTable({
         data,

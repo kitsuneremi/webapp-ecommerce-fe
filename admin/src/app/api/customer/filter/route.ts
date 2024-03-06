@@ -5,7 +5,22 @@ export async function GET(req: NextRequest) {
     let cc = req.nextUrl.searchParams.get("type");
     if (cc) {
         const type = Number.parseInt(cc);
-        if (type == 2) {
+        if (type == 1) {
+            const today = new Date();
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+
+            // Step 1: Tìm danh sách các hóa đơn trong tháng gần đây
+            const recentCustomer = await prisma.customer.findMany({
+                where: {
+                    created_date: {
+                        gte: lastMonth,
+                        lt: today
+                    }
+                }
+            })
+
+            return new Response(JSON.stringify(recentCustomer.map(customer => { return { ...customer, id: customer.id.toString() } })))
+        } else if (type == 2) {
             const today = new Date();
             const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
 
@@ -20,7 +35,7 @@ export async function GET(req: NextRequest) {
                         customer_id: null
                     }
                 },
-                
+
                 select: {
                     customer_id: true
                 }
@@ -39,10 +54,10 @@ export async function GET(req: NextRequest) {
                 }
             });
 
-            return new Response(JSON.stringify(customersWithRecentBills.map(cus => {return {...cus, id: cus.id.toString()}})))
+            return new Response(JSON.stringify(customersWithRecentBills.map(cus => { return { ...cus, id: cus.id.toString() } })))
         }
 
-        return new Response(JSON.stringify({message: 'type not supported'}))
+        return new Response(JSON.stringify({ message: 'type not supported' }))
 
 
     }

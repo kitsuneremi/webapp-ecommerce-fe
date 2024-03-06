@@ -41,20 +41,20 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: "Username must be at least 2 characters.",
     }),
-    value: z.string().min(2, {
+    value: z.number().min(2, {
         message: "Username must be at least 2 characters.",
     }),
-    target_type: z.enum(["0", "1"], {
+    target_type: z.number({
         required_error: "You need to select a notification type.",
     }),
-    discount_type: z.enum(["0", "1"], {
+    discount_type: z.number({
         required_error: "You need to select a notification type.",
     }),
     description: z.string().min(2, {
         message: "Username must be at least 2 characters.",
     }),
-    order_min_value: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
+    order_min_value: z.number({
+        required_error: "Username must be at least 2 characters.",
     }),
     max_discount_value: z.number().min(2, {
         message: "Username must be at least 2 characters.",
@@ -66,23 +66,6 @@ const formSchema = z.object({
 
 const VoucherPage = (): JSX.Element => {
 
-    const form = useForm<z.infer<typeof formSchema>>(
-        {
-            resolver: zodResolver(formSchema),
-            defaultValues: {
-                code: makeid(),
-                name: "",
-                description: "",
-                discount_type: "0",
-                max_discount_value: 0,
-                order_min_value: "0",
-                target_type: "0",
-                usage_limit: 0,
-                value: "0"
-            },
-            mode: 'all'
-        }
-    )
     const { toast } = useToast();
 
     const selectedCustomer = useAppSelector(state => state.voucherReducer.value.selected)
@@ -97,6 +80,24 @@ const VoucherPage = (): JSX.Element => {
 
     const [date, setDate] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date())]);
 
+    const form = useForm<z.infer<typeof formSchema>>(
+        {
+            resolver: zodResolver(formSchema),
+            defaultValues: {
+                code: targetVoucher ? targetVoucher.code : makeid(),
+                name: targetVoucher ? targetVoucher.name :"",
+                description: targetVoucher ? targetVoucher.description : "",
+                discount_type: targetVoucher ? targetVoucher.discount_type : 0,
+                max_discount_value: targetVoucher ? targetVoucher.max_discount_value :0,
+                order_min_value: targetVoucher ? targetVoucher.order_min_value : 0,
+                target_type: targetVoucher ? targetVoucher.target_type : 0,
+                usage_limit: targetVoucher ? targetVoucher.usage_limit : 0,
+                value: targetVoucher ? targetVoucher.value : 0
+            },
+            mode: 'all'
+        }
+    )
+
 
     useEffect(() => {
         setDate([dayjs(Date.now()), dayjs(Date.now())])
@@ -108,7 +109,9 @@ const VoucherPage = (): JSX.Element => {
         })
     }, [])
 
+    useEffect(() => {
 
+    },[targetVoucher])
 
     useEffect(() => {
         if (path && path.get("id")) {

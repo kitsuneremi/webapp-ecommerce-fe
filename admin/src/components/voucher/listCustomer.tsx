@@ -174,9 +174,9 @@ export default function ListTable() {
                             value={quickFilterCustomerType}
                             onChange={e => setQuickFilterCustomerType(e)}
                             options={[
-                                { value: '0', label: 'không' },
-                                { value: '1', label: 'Khách hàng mới' },
-                                { value: '2', label: 'Khách hàng có đơn hàng trong 1 tuần' },
+                                { value: 0, label: 'không' },
+                                { value: '1', label: 'Khách hàng mới trong tháng' },
+                                { value: '2', label: 'Khách hàng có đơn hàng trong tháng' },
                                 { value: '3', label: 'test2' },
                             ]}
                         />
