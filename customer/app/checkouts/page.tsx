@@ -5,6 +5,7 @@ import { vnData } from '@/lib/extra'
 import { Select, Input, Table } from 'antd'
 import type { TableProps } from 'antd';
 import { CartDetailResponse } from '@/lib/types'
+import { useAppSelector } from "@/redux/storage"
 
 
 const columns: TableProps<CartDetailResponse>['columns'] = [
@@ -84,6 +85,12 @@ export default function Checkout() {
 
     const [listDistricts, setListDistricts] = useState<any[]>([]);
     const [listWards, setListWards] = useState<any[]>([]);
+
+    // biến chung để lưu các id của các sp, dưới dạng mảng các {id:number, selected: boolean}[]
+    const SelectedItem = useAppSelector(state => state.selectedItem.value.selected);
+
+
+
 
     useEffect(() => {
         const province = vnData.find(target => { return target.code == selectProvince });

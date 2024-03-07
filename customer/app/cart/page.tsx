@@ -1,9 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CartDetailResponse } from '@/lib/types'
 import Image from 'next/image'
-import { Table } from 'antd'
-import type { TableProps } from 'antd';
 import {
     Carousel,
     CarouselContent,
@@ -13,52 +11,50 @@ import {
 } from "@/components/ui/carousel"
 import { FaCartShopping } from "react-icons/fa6";
 import Link from 'next/link'
+import { useAppSelector } from '@/redux/storage'
+import { set, updateSelected } from '@/redux/features/selected-items-in-cart'
+import { useDispatch } from 'react-redux'
+import { useRouter } from 'next/navigation'
 
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    CaretSortIcon,
+    ChevronDownIcon,
+    DotsHorizontalIcon,
+} from "@radix-ui/react-icons"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
+    ColumnDef,
+    ColumnFiltersState,
+    SortingState,
+    VisibilityState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable,
+} from "@tanstack/react-table"
+import axios from 'axios'
+import { baseUrl } from '@/lib/utils'
 
-const columns: TableProps<CartDetailResponse>['columns'] = [
-    {
-        title: 'Mã',
-        dataIndex: 'id',
-        key: 'id',
-        render: (text) => <a>{text}</a>,
-    },
-    {
-        title: 'image',
-        dataIndex: 'imageUrl',
-        key: 'imageUrl',
-        render: ((_, record) => {
-            return <Image src={'https://product.hstatic.net/1000304367/product/olv232239-2_7039b25098644daaba0575828b9458ba_grande.jpg'} width={160} height={120} sizes='2/3' alt='' />
-        })
-    },
-    {
-        title: 'name',
-        dataIndex: 'name',
-        key: 'name',
-        render: ((_, record) => {
-            return <div>
-                <p className='tex-lg font-bold'>{"name"}</p>
-                <p className='text-sm font-thin text-slate-600'>{"des"}</p>
-            </div>
-        })
-    },
-    {
-        title: 'quan',
-        dataIndex: 'quantity',
-        key: 'quantity',
-        render: ((_, record) => {
-            return <p>{record.quantity}</p>
-        })
-    },
-    {
-        title: 'Action',
-        key: 'action',
-        render: (_, record) => (
-            <div>
-                <a>Delete</a>
-            </div>
-        ),
-    },
-];
 
 const data: CartDetailResponse[] = [
     {
@@ -86,7 +82,160 @@ const data: CartDetailResponse[] = [
 
 export default function Cart() {
 
-    const [listCart, setListCart] = useState<CartDetailResponse[]>([])
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [listCart, setListCart] = useState<CartDetailResponse[]>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+    const [rowSelection, setRowSelection] = useState({});
+
+    const router = useRouter();
+
+    // dispatch để thao tác lên biến SelectedItem (gồm có set và updateSelected)
+    const dispatch = useDispatch();
+
+
+    // biến chung để lưu các id của các sp, dưới dạng mảng các {id:number, selected: boolean}[]
+    const SelectedItem = useAppSelector(state => state.selectedItem.value.selected);
+
+    // fetch data
+    useEffect(() => {
+        axios.get(`${baseUrl}/cart/${1}`).then(res => {
+            setListCart(res.data)
+        })
+    }, [])
+
+
+    // mỗi khi chọn 1 dòng trên table thì thay đổi lại biến selectedItem chung
+    useEffect(() => {
+        let temp: any[] = []
+        listCart.forEach(product => {
+            temp.push(
+                {
+                    id: product.id,
+                    selected: false,
+                }
+            )
+        });
+        dispatch(set({ value: { selected: temp } }))
+    }, [listCart, dispatch])
+
+
+
+    // các cột trong table
+    const columns: ColumnDef<CartDetailResponse>[] = useMemo(() => [
+        {
+            id: "select",
+            header: ({ table }) => (
+                <Checkbox
+                    //@ts-ignore
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) => { table.toggleAllPageRowsSelected(!!value) }}
+                    aria-label="Select all"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => { row.toggleSelected(!!value); dispatch(updateSelected({ id: row.getValue("id"), selected: !!value })) }}
+                    aria-label="Select row"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
+        {
+            accessorKey: "id",
+            header: "id",
+            cell: ({ row }) => (
+                <div className="capitalize">{row.getValue("id")}</div>
+            ),
+        },
+        {
+            accessorKey: "name",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        tên
+                        <CaretSortIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+        },
+        {
+            accessorKey: "imageUrl",
+            header: () => <div className="text-center">trạng thái</div>,
+            cell: ({ row }) => {
+                return <Image src={'https://product.hstatic.net/1000304367/product/olv232239-2_7039b25098644daaba0575828b9458ba_grande.jpg'} width={160} height={120} sizes='2/3' alt='' />
+            },
+        },
+        {
+            accessorKey: "quantity",
+            header: () => <div className="text-center">số lượng</div>,
+            cell: ({ row }) => {
+                return <div className='text-center'>
+                    {row.getValue("startDate")}
+                </div>
+            },
+        },
+        {
+            accessorKey: "price",
+            header: () => <div className="text-center">giá</div>,
+            cell: ({ row }) => {
+                return <div className="text-center font-medium max-h-16">
+                    {row.getValue("price")}
+                </div>
+            },
+        },
+        {
+            id: "hành động",
+            enableHiding: false,
+            header: () => <div className="text-center">hành động</div>,
+            cell: ({ row }) => {
+                return (
+                    <div className="flex justify-center">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">mở menu</span>
+                                    <DotsHorizontalIcon className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )
+            },
+        },
+    ], [router]);
+
+    const table = useReactTable({
+        data: listCart,
+        columns,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
+        state: {
+            sorting,
+            columnFilters,
+            columnVisibility,
+            rowSelection,
+        },
+    })
 
     return (
         <div className="flex mt-32 min-h-[calc(100vh-256px)] px-[14%] pt-6 flex-col gap-6">
@@ -96,7 +245,54 @@ export default function Cart() {
                     {
                         listCart.length == 0
                             ?
-                            <Table className='w-full' columns={columns} dataSource={data} />
+                            <Table>
+                                <TableHeader>
+                                    {table.getHeaderGroups().map((headerGroup) => (
+                                        <TableRow key={headerGroup.id}>
+                                            {headerGroup.headers.map((header) => {
+                                                return (
+                                                    <TableHead key={header.id}>
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                header.column.columnDef.header,
+                                                                header.getContext()
+                                                            )}
+                                                    </TableHead>
+                                                )
+                                            })}
+                                        </TableRow>
+                                    ))}
+                                </TableHeader>
+                                <TableBody>
+                                    {table.getRowModel().rows?.length ? (
+                                        table.getRowModel().rows.map((row) => (
+                                            <TableRow
+                                                key={row.id}
+                                                data-state={row.getIsSelected() && "selected"}
+                                            >
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <TableCell key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={columns.length}
+                                                className="h-24 text-center"
+                                            >
+                                                No results.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                             :
                             <p>Giỏ hàng trống, hãy thêm gì đó nhé</p>
                     }
