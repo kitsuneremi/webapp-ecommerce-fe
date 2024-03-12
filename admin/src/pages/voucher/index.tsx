@@ -36,32 +36,28 @@ const { RangePicker } = DatePicker
 
 const formSchema = z.object({
     code: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
+        message: "code must be at least 2 characters.",
     }),
     name: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
+        message: "name must be at least 2 characters.",
     }),
-    value: z.number().min(2, {
-        message: "Username must be at least 2 characters.",
+    value: z.number().min(4, {
+        message: "value must be at least 2 characters.",
     }),
     target_type: z.number({
-        required_error: "You need to select a notification type.",
+        required_error: "You need to select a target type.",
     }),
     discount_type: z.number({
-        required_error: "You need to select a notification type.",
+        required_error: "You need to select a discount type.",
     }),
-    description: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
+    description: z.string(),
+    order_min_value: z.number().min(4, {
+        message: "min order must be at least 4 characters."
     }),
-    order_min_value: z.number({
-        required_error: "Username must be at least 2 characters.",
+    max_discount_value: z.number().min(4, {
+        message: "max dis must be at least 4 characters.",
     }),
-    max_discount_value: z.number().min(2, {
-        message: "Username must be at least 2 characters.",
-    }),
-    usage_limit: z.number().min(2, {
-        message: "Username must be at least 2 characters.",
-    })
+    usage_limit: z.number()
 })
 
 const VoucherPage = (): JSX.Element => {
@@ -77,6 +73,8 @@ const VoucherPage = (): JSX.Element => {
 
     const [data, setData] = useState<VoucherResponse[]>([]);
 
+    const [discountType, setDiscountType] = useState<boolean>(false)
+
 
     const [date, setDate] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date())]);
 
@@ -85,10 +83,10 @@ const VoucherPage = (): JSX.Element => {
             resolver: zodResolver(formSchema),
             defaultValues: {
                 code: targetVoucher ? targetVoucher.code : makeid(),
-                name: targetVoucher ? targetVoucher.name :"",
+                name: targetVoucher ? targetVoucher.name : "",
                 description: targetVoucher ? targetVoucher.description : "",
                 discount_type: targetVoucher ? targetVoucher.discount_type : 0,
-                max_discount_value: targetVoucher ? targetVoucher.max_discount_value :0,
+                max_discount_value: targetVoucher ? targetVoucher.max_discount_value : 0,
                 order_min_value: targetVoucher ? targetVoucher.order_min_value : 0,
                 target_type: targetVoucher ? targetVoucher.target_type : 0,
                 usage_limit: targetVoucher ? targetVoucher.usage_limit : 0,
@@ -104,14 +102,14 @@ const VoucherPage = (): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        axios.get(`/api/voucher`).then(res => {
+        axios.get(`${baseUrl}/voucher`).then(res => {
             setData(res.data);
         })
     }, [])
 
     useEffect(() => {
-
-    },[targetVoucher])
+        console.log(selectedCustomer);
+    }, [selectedCustomer])
 
     useEffect(() => {
         if (path && path.get("id")) {
@@ -125,6 +123,8 @@ const VoucherPage = (): JSX.Element => {
 
 
     const handleSubmitForm = (values) => {
+        if (selectedCustomer.length == 0) return toast({ title: 'chưa chọn khách hàng nào' })
+
         axios.post(`${baseUrl}/voucher`, {
             code: values.code,
             name: values.name,
@@ -132,10 +132,11 @@ const VoucherPage = (): JSX.Element => {
             targetType: values.target_type,
             usageLimit: values.usage_limit,
             discountType: values.discount_type,
-            orderMinValue: values.order_min_value,
+            max_disount_value: values.max_discount_value,
+            order_min_value: values.order_min_value,
             startDate: date[0].toDate(),
             endDate: date[1].toDate(),
-            lstCustomer: selectedCustomer.map(val => { return val.id }).toString()
+            lstCustomer: selectedCustomer.map(val => { return val.id })
         })
     }
 
@@ -168,7 +169,7 @@ const VoucherPage = (): JSX.Element => {
                         <div className='w-full flex justify-center p-5 gap-5'>
                             <div className='flex flex-col gap-3 w-5/12'>
                                 <Form {...form}>
-                                    <form className="space-y-8">
+                                    <form onSubmit={e => { e.preventDefault() }} className="space-y-8">
                                         <FormField
                                             control={form.control}
                                             name="name"
@@ -202,9 +203,9 @@ const VoucherPage = (): JSX.Element => {
                                                 <FormItem>
                                                     <FormLabel>Hình thức giảm giá</FormLabel>
                                                     <FormControl>
-                                                        <RadioGroup className="flex gap-3 items-center">
+                                                        <RadioGroup className="flex gap-3 items-center" defaultValue='0' onValueChange={e => { setDiscountType(e == '1') }}>
                                                             <div className="flex items-center space-x-2">
-                                                                <RadioGroupItem value="0" id="option-one" />
+                                                                <RadioGroupItem value="0" id="option-one" defaultChecked />
                                                                 <Label htmlFor="option-one">giảm trực tiếp</Label>
                                                             </div>
                                                             <div className="flex items-center space-x-2">
@@ -217,19 +218,22 @@ const VoucherPage = (): JSX.Element => {
                                                 </FormItem>
                                             )}
                                         />
-                                        <FormField
-                                            control={form.control}
-                                            name="max_discount_value"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Mức giảm tối đa</FormLabel>
-                                                    <FormControl>
-                                                        <InputNumber className='w-full' {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                        {discountType
+                                            &&
+                                            <FormField
+                                                control={form.control}
+                                                name="max_discount_value"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Mức giảm tối đa</FormLabel>
+                                                        <FormControl>
+                                                            <InputNumber className='w-full' {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        }
                                         <FormField
                                             control={form.control}
                                             name="usage_limit"
@@ -265,7 +269,7 @@ const VoucherPage = (): JSX.Element => {
                                             (
                                                 <FormItem>
                                                     <FormLabel>Đối tượng áp dụng</FormLabel>
-                                                    <FormControl defaultValue={0}>
+                                                    <FormControl defaultValue='1'>
                                                         <RadioGroup className="flex gap-3 items-center">
                                                             <div className="flex items-center space-x-2">
                                                                 <RadioGroupItem value="0" id="option-one" />
@@ -284,6 +288,8 @@ const VoucherPage = (): JSX.Element => {
                                         <div className='mt-3'>
                                             <label>
                                                 <p className='mb-1 text-sm text-slate-600'>Ngày bắt đầu {"->"} ngày kết thúc</p>
+
+                                                {/* @ts-ignore */}
                                                 <RangePicker className='w-full' value={date} onChange={(val) => { if (val) { setDate(val) } }} showTime />
                                             </label>
                                         </div>

@@ -179,3 +179,8 @@ export type Selected = {
     selected: boolean;
     children: Child[];
 };
+
+export type SelectedCustomer = {
+    id: number;
+    selected: boolean;
+};

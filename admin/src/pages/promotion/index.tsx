@@ -54,7 +54,7 @@ const PromotionPage = (): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        if (path.get("id")) {
+        if (path && path.get("id")) {
             axios.get(`${baseUrl}/promotion/${path.get("id")}`).then(res => {
                 setTargetPromotion(res.data)
             });
@@ -65,10 +65,10 @@ const PromotionPage = (): JSX.Element => {
     const handleSubmitForm = () => {
         console.log(targetPromotion + " " + date);
         console.log(listSelectedProduct);
-        let lst = []
+        let lst: number[] = []
         listSelectedProduct.map(value => {
             value.children.map(child => {
-                if(child.selected){lst.push(child.id)}
+                if (child.selected) { lst.push(child.id) }
             })
         })
         if (!date) {
@@ -77,16 +77,16 @@ const PromotionPage = (): JSX.Element => {
             toast({
                 title: 'chưa nhập tên chương trình'
             })
-        }else if(lst.length == 0){
+        } else if (lst.length == 0) {
             toast({
                 title: 'chưa chọn sản phẩm nào'
             })
-        }else if(value.toString().trim().length == 0){
+        } else if (value.toString().trim().length == 0) {
             toast({
                 title: 'đặt mức giảm giá'
             })
         } else {
-            if(targetPromotion){
+            if (targetPromotion) {
                 axios.post(`${baseUrl}/promotion`, {
                     status: 0,
                     value: value,
@@ -105,7 +105,7 @@ const PromotionPage = (): JSX.Element => {
                         redirect(`/promotion?id=${res.data.data.id}`)
                     }
                 })
-            }else{
+            } else {
                 axios.put(`${baseUrl}/promotion`, targetPromotion).then(res => {
                     toast({
                         title: res.data.title,
@@ -165,6 +165,7 @@ const PromotionPage = (): JSX.Element => {
 
                                 <label>
                                     <p className='mb-1 text-sm text-slate-600'>Ngày bắt đầu {"->"} ngày kết thúc</p>
+                                    {/* @ts-ignore */}
                                     <RangePicker className='w-full' value={date} onChange={(val) => { setDate(val) }} showTime />
                                 </label>
                                 <Button onClick={() => { handleSubmitForm() }} type='primary' className='bg-blue-500'>
