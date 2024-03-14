@@ -50,6 +50,11 @@ model Bill {
   receiver_name      String?         @db.VarChar(255)
   receiver_phone     String?         @db.VarChar(255)
   status             String?         @db.VarChar(255)
+  email              String?         @db.VarChar(255)
+  receiver_commune   String?         @db.VarChar(255)
+  receiver_details   String?         @db.VarChar(255)
+  receiver_district  String?         @db.VarChar(255)
+  receiver_province  String?         @db.VarChar(255)
   Users              Users?          @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "FK8uj2vsobqgiynns1cqvmva3q7")
   Customer           Customer?       @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "FKbspdwf59pyvty1xwhga3ew7e0")
   BillDetails        BillDetails[]
@@ -63,7 +68,7 @@ model Bill {
 model BillDetails {
   delete_flag        Boolean?       @db.Bit(1)
   quantity           Int?
-  status             Int?
+  status             String?        @db.VarChar(255)
   unit_price         Decimal?       @db.Decimal(38, 2)
   bill_id            BigInt?
   created_date       DateTime?      @db.DateTime(6)
@@ -351,22 +356,24 @@ model Users {
 model Voucher {
   delete_flag        Boolean?        @db.Bit(1)
   value              Float?          @db.Float
-  target_type        Int             @default(0)
-  discount_type      Int             @default(0)
-  description        String?         @default("")
-  order_min_value    Float           @db.Float @default(0)
-  max_discount_value Float?          
-  usage_limit        Int?             
   created_date       DateTime?       @db.DateTime(6)
   end_date           DateTime?       @db.DateTime(6)
   id                 BigInt          @id @default(autoincrement())
   last_modified_date DateTime?       @db.DateTime(6)
   start_date         DateTime?       @db.DateTime(6)
-  code               String?         @db.VarChar(255)
   created_by         String          @db.VarChar(255)
   last_modified_by   String?         @db.VarChar(255)
   name               String?         @db.VarChar(255)
   status             String?         @db.VarChar(255)
+  code               String?         @db.VarChar(255)
+  description        String?         @default("")
+  discount_type      Int             @default(0)
+  max_discount_value Float?
+  order_min_value    Float           @default(0) @db.Float
+  target_type        String?         @db.VarChar(255)
+  usage_limit        String?         @db.VarChar(255)
+  code_voucher       String?         @db.VarChar(255)
+  quantity           Int?
   VoucherDetail      VoucherDetail[]
 }
 

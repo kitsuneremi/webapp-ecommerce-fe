@@ -184,3 +184,13 @@ export type SelectedCustomer = {
     id: number;
     selected: boolean;
 };
+
+
+export type SelectedProductDetail = {
+    detail_id: number,
+    buy_quantity: number,
+    name: string,
+    image: string,
+    type: string,
+    price: number
+}
