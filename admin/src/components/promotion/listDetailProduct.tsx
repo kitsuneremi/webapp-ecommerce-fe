@@ -118,9 +118,9 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
             cell: ({ row }) => (
                 <Checkbox
                     checked={row.getIsSelected() || (selectedProduct.find(value => {
-                        return value.id == row.getValue("id")
+                        return value.id == row.original.id
                     })?.selected)}
-                    onCheckedChange={(value) => { row.toggleSelected(!!value); dispatch(updateSelected({ id: row.getValue("id"), selected: !!value })) }}
+                    onCheckedChange={(value) => { row.toggleSelected(!!value); dispatch(updateSelected({ id: row.original.id, selected: !!value })) }}
                     aria-label="Select row"
                 />
             ),
@@ -128,21 +128,11 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
             enableHiding: false,
         },
         {
-            id: "accordion",
-            header: () => <div className="text-center">acr</div>,
-            cell: ({ row }) => (
-                // @ts-ignore
-                <div onClick={() => handleToggleOpen(row.getValue("id"))}>{!!open[row.getValue("id")] ? <FaAngleUp /> : <FaAngleDown />}</div>
-            ),
-            enableSorting: false,
-            enableHiding: false,
-        },
-        {
-            accessorKey: "id",
-            header: "id",
-            cell: ({ row }) => (
-                <div className="capitalize">{row.getValue("id")}</div>
-            ),
+            accessorKey: "status",
+            header: () => <div className="text-center">Ảnh</div>,
+            cell: ({ row }) => {
+                return <div className='flex justify-center'><img src={row.original.imageUrl} alt='' className='w-14 h-20' /></div>
+            },
         },
         {
             accessorKey: "name",
@@ -160,28 +150,14 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
             cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
         },
         {
-            accessorKey: "status",
-            header: () => <div className="text-center">trạng thái</div>,
-            cell: ({ row }) => {
-                return <div className='flex justify-center'>{row.getValue("status") == 0 ? row.getValue("endDate") > new Date() ? <Tag color={"red"}>
-                    ĐÃ KẾT THÚC
-                </Tag> : <Tag color={"blue"}>
-                    ĐANG DIỄN RA
-                </Tag> : <Tag color={"yellow"}>
-                    ĐANG TẠM NGƯNG
-                </Tag>}</div>
-            },
-        },
-        {
-            accessorKey: "lstProductDetails",
-            enableHiding: true,
-            header: () => <div className="text-center">sl biến thể</div>,
-            cell: ({ row }) => {
-                return <div className="text-center font-medium max-h-16">
-                    {/* @ts-ignore */}
-                    {row.getValue("lstProductDetails").length}
-                </div>
-            },
+            id: "accordion",
+            header: () => <div className="text-center">Chi tiết</div>,
+            cell: ({ row }) => (
+                // @ts-ignore
+                <div className='flex justify-center text-xl' onClick={() => handleToggleOpen(row.original.id)}>{!!open[row.original.id] ? <FaAngleUp /> : <FaAngleDown />}</div>
+            ),
+            enableSorting: false,
+            enableHiding: false,
         },
     ], [dispatch, open, selectedProduct]);
 
@@ -279,7 +255,8 @@ export default function ListTable({ data }: { data: ProductResponse[] }) {
                                         </TableRow>
                                         <TableRow data-state={row.getIsSelected() && "selected"}>
                                             {/* @ts-ignore */}
-                                            {open[row.getValue("id")] && <TableCell colSpan={columns.length}><ProductDetailTable targetDataId={row.getValue("id")} selected={row.getIsSelected()} belowData={row.getValue("lstProductDetails")}></ProductDetailTable></TableCell>}
+                                            {open[row.original.id] && <TableCell colSpan={columns.length}><ProductDetailTable targetDataId={row.original.id} selected={row.getIsSelected()} belowData={row.original.lstProductDetails
+                                            }></ProductDetailTable></TableCell>}
                                         </TableRow>
                                     </>
                                 ))
@@ -345,8 +322,8 @@ const ProductDetailTable = ({ belowData, selected, targetDataId }: { targetDataI
             ),
             cell: ({ row }) => (
                 <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => {row.toggleSelected(!!value); dispatch(toggleChildren({id: row.getValue("id"), parentId: targetDataId, value: !!value}))}}
+                    checked={row.getIsSelected() || !!selectedProduct.find(slt => {slt.id == targetDataId})?.children.find(child => child.id == row.original.id)?.selected}
+                    onCheckedChange={(value) => { row.toggleSelected(!!value); dispatch(toggleChildren({ id: row.getValue("id"), parentId: targetDataId, value: !!value })) }}
                     aria-label="Select row"
                 />
             ),
@@ -359,6 +336,16 @@ const ProductDetailTable = ({ belowData, selected, targetDataId }: { targetDataI
             cell: ({ row }) => (
                 <div className="capitalize">{row.getValue("id")}</div>
             ),
+        },
+        {
+            accessorKey: "imageUrl",
+            header: () => <div className="text-center">img</div>,
+            cell: ({ row }) => {
+                return <div className="text-center flex justify-center font-medium max-h-16">
+                    {/* @ts-ignore */}
+                    <img className="w-14 h-20" src={row.getValue("imageUrl")} />
+                </div>
+            },
         },
         {
             accessorKey: "size",
@@ -375,16 +362,23 @@ const ProductDetailTable = ({ belowData, selected, targetDataId }: { targetDataI
             header: () => <div className="text-center">màu sắc</div>,
             cell: ({ row }) => {
                 // @ts-ignore
-                return <div className="text-center font-medium">{row.getValue("color").name}</div>
+                return <div className={`text-center font-medium rounded-md px-1 py-1 text-slate-200`} style={{ backgroundColor: row.original.color.name }}>{row.original.color.name}</div>
             },
         },
         {
-            accessorKey: "imageUrl",
-            header: () => <div className="text-center">img</div>,
+            accessorKey: "price",
+            header: () => <div className="text-center">Giá</div>,
+            cell: ({ row }) => {
+                // @ts-ignore
+                return <div className="text-center font-medium">{row.original.price}</div>
+            },
+        },
+        {
+            accessorKey: "status",
+            header: () => <div className="text-center">status</div>,
             cell: ({ row }) => {
                 return <div className="text-center flex justify-center font-medium max-h-16">
-                    {/* @ts-ignore */}
-                    <img className="h-full aspect-auto" src={row.getValue("imageUrl")} />
+                    <Tag color='cyan'>{row.original.status == 0 ? "Đang bán" : "Đã ngừng"}</Tag>
                 </div>
             },
         }

@@ -104,12 +104,8 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
             accessorKey: "status",
             header: () => <div className="text-center">trạng thái</div>,
             cell: ({ row }) => {
-                return <div className='flex justify-center'>{row.getValue("status") == 0 ? row.getValue("endDate") > new Date() ? <Tag color={"red"}>
-                    ĐÃ KẾT THÚC
-                </Tag> : <Tag color={"blue"}>
-                    ĐANG DIỄN RA
-                </Tag> : <Tag color={"yellow"}>
-                    ĐANG TẠM NGƯNG
+                return <div className='flex justify-center'>{<Tag color={"blue"}>
+                    {row.original.status}
                 </Tag>}</div>
             },
         },
@@ -118,7 +114,7 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
             header: () => <div className="text-center">ngày bắt đầu</div>,
             cell: ({ row }) => {
                 return <div className='text-center'>
-                    {row.getValue("startDate")}
+                    {row.original.startDate.toString().split("T")[0] + " - " + row.original.startDate.toString().split("T")[1]}
                 </div>
             },
         },
@@ -127,7 +123,7 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
             header: () => <div className="text-center">ngày kết thúc</div>,
             cell: ({ row }) => {
                 return <div className='text-center'>
-                    {row.getValue("endDate")}
+                    {row.original.endDate.toString().split("T")[0] + " - " + row.original.endDate.toString().split("T")[1]}
                 </div>
             },
         },
@@ -136,7 +132,7 @@ export default function ListTable({ data }: { data: VoucherResponse[] }) {
             header: () => <div className="text-center">giá trị giảm</div>,
             cell: ({ row }) => {
                 return <div className="text-center font-medium max-h-16">
-                    {row.getValue("value")}
+                    {row.original.value + `${row.original.discount_type == 0 ? "đ" : "%"}`}
                 </div>
             },
         },

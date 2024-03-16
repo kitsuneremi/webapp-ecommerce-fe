@@ -47,7 +47,7 @@ import { Color, Product, ProductDetail, PromotionDetails, Size } from '@prisma/c
 import { Prisma } from '@prisma/client'
 import { Radio, Tag, Form, Select, Slider } from 'antd/lib'
 import { useAppSelector } from "../../redux/storage"
-import { set, updateSelected } from '../../redux/features/sell-selected-product-detail'
+import { set, updateSelected, removeSelected } from '../../redux/features/sell-selected-product-detail'
 import { useDispatch } from "react-redux"
 
 
@@ -88,7 +88,7 @@ function ListTable() {
                 <Checkbox
                     checked={row.getIsSelected()}
                     // @ts-ignore
-                    onCheckedChange={(value) => { row.toggleSelected(!!value), dispatch(updateSelected({ id: Number.parseInt(row.original.id.toString()), image: row.original.image_url, name: row.original.Product.name, quantity: 1, price: row.original.price, type: `[ ${row.original.Color.name + " - " + row.original.Size.name} ]` })) }}
+                    onCheckedChange={(value) => { row.toggleSelected(!!value),!!value ? dispatch(updateSelected({ id: Number.parseInt(row.original.id.toString()), image: row.original.image_url, name: row.original.Product.name, quantity: row.original.product_id.quantity, buy_quantity: 1, price: row.original.price, type: `[ ${row.original.Color.name + " - " + row.original.Size.name} ]` })) : dispatch(removeSelected({id: Number.parseInt(row.original.id.toString())})) }}
                     aria-label="Select row"
                 />
             ),

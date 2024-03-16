@@ -119,7 +119,7 @@ export type VoucherResponse = {
     endDate: Date,
     last_modified_date: Date,
     last_modified_by: string,
-    status: number,
+    status: string,
 
 }
 
@@ -192,5 +192,6 @@ export type SelectedProductDetail = {
     name: string,
     image: string,
     type: string,
-    price: number
+    price: number,
+    quantity: number
 }

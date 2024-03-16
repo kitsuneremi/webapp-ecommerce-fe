@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react"
 import axios from 'axios'
 import { CustomerResponse, VoucherResponse } from "../../lib/type";
 import { vnData } from '../../lib/extra'
-import { FaRegTrashAlt, FaChevronRight } from "react-icons/fa";
+import { FaChevronRight } from "react-icons/fa";
 import { BsBank2 } from "react-icons/bs";
 import { TbBrandCashapp } from "react-icons/tb";
-import { Radio, Tag, Input, Form, Select, Slider } from 'antd/lib'
+import { Radio, Tag, Input, Form, Select, Slider, InputNumber } from 'antd/lib'
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     Dialog,
@@ -48,7 +48,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Layout as DashboardLayout } from '../../layouts/dashboard/layout';
 import { baseUrl, makeid } from "../../lib/functional";
-import { Bill } from "@prisma/client";
+import { Address, Bill, BillDetails, Customer, ProductDetail } from "@prisma/client";
 import ProductTable from '../../components/sell/productTabel'
 import ValProvider from "../../redux/provider";
 import { useAppSelector } from '../../redux/storage'
@@ -59,6 +59,8 @@ import {
 } from "@radix-ui/react-icons"
 import { SelectedProductDetail } from '../../lib/type'
 import { Button } from "@/components/ui/button"
+import { useDispatch } from "react-redux";
+import { updateQuantity, set, updateSelected } from '../../redux/features/sell-selected-product-detail'
 
 type FieldType = {
     fullName?: string;
@@ -80,17 +82,23 @@ function SellPage() {
 
     const [currentPanel, setCurrentPanel] = useState<number>(0);
 
+    const [paymentType, setPaymentType] = useState<number>(0);
+    const [digitalCurrency, setDigitalCurrency] = useState<number>(0);
+
+
     // màn danh sách hóa đơn
     const [emptyBill, setEmptyBill] = useState<Bill[]>([]);
     const [billType, setBillType] = useState<string>("0"); // -1 là hủy, 0 là đang chờ,1 là đã xác nhận/chờ giao hàng, 2 là đang giao hàng, 3 là chưa thanh toán, 4 là đã hoàn thành, 5 hoàn trả
     const [listDisplayBill, setListDisplayBill] = useState<Bill[]>([]);
 
     const [currentBillSelected, setCurrentBillSelected] = useState<Bill>() //biến xác định xem hóa đơn nào đang được lựa chọn để sửa);
-
+    const [currentBillSelectedProduct, setCurrentBillSelectedProduct] = useState<BillDetails[]>([])
     // search sản phẩm
     const [searchValue, setSearchValue] = useState<string>("")
     const [searchResult, setSearchResult] = useState<any[]>([])
     const [searchStatusValue, setSearchStatusValue] = useState<string>("1")
+
+    const dispatch = useDispatch();
 
     const selectedDetailProduct = useAppSelector(state => state.SellReducer.value.selected);
 
@@ -114,6 +122,8 @@ function SellPage() {
         }
     }, [searchValue, searchStatusValue])
 
+    const [sellShip, setSellShip] = useState<boolean>(false);
+
     // thông tin khách hàng
     const [addModalPhone, setAddModalPhone] = useState<string>("");
     const [addModalDetailAddress, setAddModalDetailAddress] = useState<string>("");
@@ -126,13 +136,28 @@ function SellPage() {
     const [listWards, setListWards] = useState<any[]>([]);
 
 
-
     const [searchCustomerValue, setSearchCustomerValue] = useState<string>("");
-    const [listSearchCustomerValue, setListSearchCustomer] = useState<CustomerResponse[]>([]);
+    const [listSearchCustomerValue, setListSearchCustomer] = useState<Customer[]>([]);
 
-    const [listCustomer, setListCustomer] = useState<CustomerResponse[]>();
-    const [currentCustomer, setCurrentCustomer] = useState<CustomerResponse>();
+    const [listCustomer, setListCustomer] = useState<Customer[]>();
+    const [currentCustomer, setCurrentCustomer] = useState<Customer>();
+    const [currentCustomerAddress, setCurrentCustomerAddress] = useState<Address>();
 
+    const [customCustomerAddress, setCustomCustomerAddress] = useState<FieldType>({
+        detail: "",
+        district: "",
+        province: "",
+        ward: "",
+        email: "",
+        fullName: "",
+        phone: ""
+    });
+
+    useEffect(() => {
+        if (currentCustomer) {
+            setCurrentCustomerAddress(currentCustomer.Address[0])
+        }
+    }, [currentCustomer])
 
     useEffect(() => {
         const province = vnData.find(target => { return target.code == addModalProvince });
@@ -152,27 +177,53 @@ function SellPage() {
 
     useEffect(() => {
         if (searchCustomerValue.trim().length > 0) {
-            axios.get(`http://localhost:8080/api/v1/customer?keyword=${searchCustomerValue}`).then(res => {
+            axios.get(`api/customer?keyword=${searchCustomerValue}`).then(res => {
                 setListSearchCustomer(res.data)
             })
         }
     }, [searchCustomerValue])
 
     useEffect(() => {
-        console.log(selectedDetailProduct)
-    }, [selectedDetailProduct])
+        if (selectedDetailProduct.length > 0 && currentBillSelected) {
+            axios.post('/api/bill/updateDetail', {
+                billId: currentBillSelected.id,
+                productDetails: selectedDetailProduct
+            }).then(r => {
+                axios.get(`/api/bill/data?id=${currentBillSelected.id}`).then(res => {
+                    setCurrentBillSelectedProduct(res.data);
+                })
+            })
+        }
+    }, [currentBillSelected, selectedDetailProduct])
 
+    useEffect(() => {
+        dispatch(set({ selected: [] }))
+        if (currentBillSelected) {
+            axios.get(`/api/bill/data?id=${currentBillSelected.id}`).then(res => {
+                setCurrentBillSelectedProduct(res.data)
+                // res.data.map(data => {
+                //     dispatch(updateSelected({ id: Number.parseInt(data.ProductDetail.id.toString()), image: data.ProductDetail.image_url, name: data.ProductDetail.Product.name, quantity: data.ProductDetail.Product.quantity, buy_quantity: data.quantity, price: data.unit_price, type: `[ ${data.ProductDetail.Color.name + " - " + data.ProductDetail.Size.name} ]` }))
+                // })
+            })
+        }
+    }, [currentBillSelected])
 
-    const CustomerRender = ({ customer }: { customer: CustomerResponse }): JSX.Element => {
-        return (
-            <div className="flex">
-                <img src="https://th.bing.com/th/id/OIP.gau_s0CHzCxhnpvuIU4LaAHaHa?rs=1&pid=ImgDetMain" alt="" className="w-7 aspect-square rounded-full" />
-                <div className="flex flex-col gap-2">
-                    <p className="text-lg font-bold">{customer.fullName}</p>
-                    <p className="text-sm text-slate-600">{customer.phone}</p>
-                </div>
-            </div>
-        )
+    const updateBill = (value) => {
+        if (currentBillSelected) {
+            axios.post(`/api/bill/updateReceive`, {
+                idBill: currentBillSelected.id,
+                receive_name: value.fullName,
+                receive_district: value.district,
+                receive_email: value.enail,
+                receive_phone: value.phone,
+                receive_commune: value.ward,
+                receive_detail: value.detail,
+                receive_province: value.province
+
+            }).then(res => {
+                setCurrentBillSelected(res.data)
+            })
+        }
     }
 
     // HẾT thông tin khách hàng
@@ -225,20 +276,21 @@ function SellPage() {
     // HẾT voucher
 
     const handleCreateEmptyBill = () => {
-        axios.post(`/api/v1/bill`).then(
+        axios.post(`/api/bill`).then(
             res => {
                 setCurrentPanel(1);
                 setCurrentBillSelected(res.data);
+                setEmptyBill(prev => { return [...prev, res.data] })
             }
         )
     }
 
-    const columns: ColumnDef<SelectedProductDetail>[] = useMemo(() => [
+    const columns: ColumnDef<BillDetails>[] = useMemo(() => [
         {
             accessorKey: "id",
             header: "id",
             cell: ({ row }) => (
-                <div className="capitalize">{row.original.detail_id}</div>
+                <div className="capitalize">{row.original.product_detail_id?.toString()}</div>
             ),
         },
         {
@@ -256,7 +308,7 @@ function SellPage() {
                 )
             },
             cell: ({ row }) => <div className="lowercase">
-                {row.original.name}
+                {row.original.ProductDetail.Product.name}
             </div>
         },
         {
@@ -264,7 +316,7 @@ function SellPage() {
             header: () => <div className="text-center">phân loại</div>,
             cell: ({ row }) => {
                 return <div className='text-center text-nowrap'>
-                    {row.original.type}
+                    {"[ " + row.original.ProductDetail.Color.name + " - " + row.original.ProductDetail.Size.name + " ]"}
                 </div>
             },
         },
@@ -273,7 +325,7 @@ function SellPage() {
             header: () => <div className="text-center">số lượng</div>,
             cell: ({ row }) => {
                 return <div className='text-center'>
-                    {row.original.buy_quantity}
+                    <InputNumber min={1} max={row.original.ProductDetail.quantity} defaultValue={row.original.quantity} onChange={(e) => { if (e) { dispatch(updateQuantity({ id: Number.parseInt(row.original.product_detail_id.toString()), quantity: e })) } }} />
                 </div>
             },
         },
@@ -282,23 +334,37 @@ function SellPage() {
             header: () => <div className="text-center">đơn giá</div>,
             cell: ({ row }) => {
                 return <div className="text-center font-medium max-h-16">
-                    {row.original.price}
+                    {row.original.unit_price}
                 </div>
             },
-        },
-        {
-            accessorKey: "price",
-            header: () => <div className="text-center">thành tiền</div>,
-            cell: ({ row }) => {
-                return <div className="text-center font-medium max-h-16">
-                    {row.original.buy_quantity * row.original.price}
+        }
+    ], [dispatch]);
+
+    const CustomerRender = ({ customer }: { customer: Customer }): JSX.Element => {
+        return (
+            <div className="w-full p-2 rounded-lg hover:scale-105 hover:bg-slate-100" onClick={() => { setCurrentCustomer(customer) }}>
+                <div>
+                    <img src="https://th.bing.com/th/id/OIP.gau_s0CHzCxhnpvuIU4LaAHaHa?rs=1&pid=ImgDetMain" alt="" className="w-8 m-2 aspect-square rounded-full" />
+                    <div className="flex w-full justify-between">
+                        <div className="flex flex-col gap-2 px-4">
+                            <p className="text-lg font-bold">{customer.full_name}</p>
+                            <div className="flex gap-4">
+                                <p className="text-sm text-slate-500">{customer.phone}</p>
+                                <p className="text-sm text-slate-500">{customer.email}</p>
+                            </div>
+                        </div>
+                        <div className="relative mx-2 after:absolute after:h-full after:w-[1px] after:bg-slate-600"></div>
+                        <div className="px-4">
+                            <p className="text-sm text-slate-500">{`${customer.Address[0].commune}-${customer.Address[0].province}-${customer.Address[0].district}`}</p>
+                        </div>
+                    </div>
                 </div>
-            },
-        },
-    ], []);
+            </div>
+        )
+    }
 
     const table = useReactTable({
-        data: selectedDetailProduct,
+        data: currentBillSelectedProduct,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -315,6 +381,16 @@ function SellPage() {
             rowSelection,
         },
     })
+
+
+    const handleSell = () => {
+        if (currentBillSelected) {
+            axios.post('/api/bill/sell', {
+                billId: currentBillSelected.id,
+                digitalCurrency
+            })
+        }
+    }
 
     return (
         <DashboardLayout>
@@ -340,7 +416,7 @@ function SellPage() {
                                         <p className="text-slate-600 font-semibold mb-3">Hóa đơn chờ</p>
                                         <div className="flex gap-3">
                                             {emptyBill.map((bill, index) => {
-                                                return <div onClick={() => { setCurrentBillSelected(bill); setCurrentPanel(1) }} key={index} className="w-28 px-3 py-2 font-semibold bg-slate-500 text-white">
+                                                return <div onClick={() => { setCurrentBillSelected(bill); setCurrentPanel(1) }} key={index} className="w-28 text-center px-3 py-2 font-semibold bg-slate-500 text-white">
                                                     {bill.code_bill}
                                                 </div>
                                             })}
@@ -539,24 +615,9 @@ function SellPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* thông tin khách hàng */}
-                                                <div className="border-[1px] border-slate-500 border-opacity-35 p-2 shadow-lg">
-
-
-                                                    {/* hiển thị thông tin khách hàng đã chọn/thêm */}
-                                                    <div className="flex flex-col">
-                                                        <p>Tên khách hàng: {currentCustomer ? currentCustomer.fullName : ''}</p>
-                                                        <p>Email: {currentCustomer && currentCustomer.email ? currentCustomer.email : 'không có'}</p>
-                                                        <p>Số điện thoại: {currentCustomer ? currentCustomer.phone : ''}</p>
-                                                    </div>
-
-                                                </div>
-                                                {/* HẾT thông tin khách hàng */}
-
                                                 {/* thông tin thanh toán */}
                                                 <div className="border-[1px] border-slate-500 border-opacity-35 p-2 shadow-lg">
                                                     <div className="flex max-md:flex-col gap-3 mt-3 p-2">
-
                                                         <div className="w-1/2 max-md:w-full">
                                                             <div className="w-full">
                                                                 <p className="text-xl font-bold">Thông tin khách hàng và người nhận</p>
@@ -593,79 +654,84 @@ function SellPage() {
                                                                                             // onFinishFailed={onFinishFailed}
                                                                                             autoComplete="off"
                                                                                         >
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Họ và tên"
-                                                                                                name="fullName"
-                                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
-                                                                                            >
-                                                                                                <Input />
-                                                                                            </Form.Item>
+                                                                                            <div>
+                                                                                                <p>thông tin khách hàng</p>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Họ và tên"
+                                                                                                    name="fullName"
+                                                                                                    rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                                                >
+                                                                                                    <Input />
+                                                                                                </Form.Item>
 
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Số điện thoại"
-                                                                                                name="phone"
-                                                                                                rules={[{ required: true, message: 'Please input your password!' }]}
-                                                                                            >
-                                                                                                <Input />
-                                                                                            </Form.Item>
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Email"
-                                                                                                name="email"
-                                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
-                                                                                            >
-                                                                                                <Input />
-                                                                                            </Form.Item>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Số điện thoại"
+                                                                                                    name="phone"
+                                                                                                    rules={[{ required: true, message: 'Please input your password!' }]}
+                                                                                                >
+                                                                                                    <Input />
+                                                                                                </Form.Item>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Email"
+                                                                                                    name="email"
+                                                                                                    rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                                                >
+                                                                                                    <Input />
+                                                                                                </Form.Item>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <p>Thông tin địa chỉ</p>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Province"
+                                                                                                    name="province"
+                                                                                                    rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                                                >
+                                                                                                    <Select className="z-[1000]" defaultValue={1} placeholder='Tình/ Thành phố' value={addModalProvince} onChange={value => { setAddModalProvince(value) }}>
+                                                                                                        {vnData.map((province) => {
+                                                                                                            return <option key={province.code} value={province.code}>{province.name}</option>
+                                                                                                        })}
+                                                                                                    </Select>
+                                                                                                </Form.Item>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Quận/Huyện"
+                                                                                                    name="district"
+                                                                                                    rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                                                >
+                                                                                                    <Select className="z-[1000]" placeholder='Quận/Huyện' defaultValue={1} value={addModalDistrict} onChange={value => { setAddModalDistrict(value) }}>
+                                                                                                        {
+                                                                                                            listDistricts.map(district => {
+                                                                                                                return <option key={district.code} value={district.code}>{district.name}</option>
+                                                                                                            })
+                                                                                                        }
+                                                                                                    </Select>
+                                                                                                </Form.Item>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="Xã/Thị trấn"
+                                                                                                    name="ward"
+                                                                                                    rules={[{ required: true, message: 'Hãy nhập' }]}
+                                                                                                >
+                                                                                                    <Select className="z-[1000]" placeholder='Xã/Thị trấn' defaultValue={1} value={addModalWard} onChange={value => { setAddModalWard(value) }}>
+                                                                                                        {
+                                                                                                            listWards.map(ward => {
+                                                                                                                return <option key={ward.code} value={ward.code}>{ward.name}</option>
+                                                                                                            })
+                                                                                                        }
+                                                                                                    </Select>
+                                                                                                </Form.Item>
 
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Province"
-                                                                                                name="province"
-                                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
-                                                                                            >
-                                                                                                <Select className="z-[1000]" defaultValue={1} placeholder='Tình/ Thành phố' value={addModalProvince} onChange={value => { setAddModalProvince(value) }}>
-                                                                                                    {vnData.map((province) => {
-                                                                                                        return <option key={province.code} value={province.code}>{province.name}</option>
-                                                                                                    })}
-                                                                                                </Select>
-                                                                                            </Form.Item>
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Quận/Huyện"
-                                                                                                name="district"
-                                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
-                                                                                            >
-                                                                                                <Select className="z-[1000]" placeholder='Quận/Huyện' defaultValue={1} value={addModalDistrict} onChange={value => { setAddModalDistrict(value) }}>
-                                                                                                    {
-                                                                                                        listDistricts.map(district => {
-                                                                                                            return <option key={district.code} value={district.code}>{district.name}</option>
-                                                                                                        })
-                                                                                                    }
-                                                                                                </Select>
-                                                                                            </Form.Item>
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="Xã/Thị trấn"
-                                                                                                name="ward"
-                                                                                                rules={[{ required: true, message: 'Hãy nhập' }]}
-                                                                                            >
-                                                                                                <Select className="z-[1000]" placeholder='Xã/Thị trấn' defaultValue={1} value={addModalWard} onChange={value => { setAddModalWard(value) }}>
-                                                                                                    {
-                                                                                                        listWards.map(ward => {
-                                                                                                            return <option key={ward.code} value={ward.code}>{ward.name}</option>
-                                                                                                        })
-                                                                                                    }
-                                                                                                </Select>
-                                                                                            </Form.Item>
+                                                                                                <Form.Item<FieldType>
+                                                                                                    label="địa chỉ chi tiết"
+                                                                                                    name="detail"
+                                                                                                    rules={[{ required: true, message: 'Hãy nhập địa chỉ chi tiết' }]}
+                                                                                                >
+                                                                                                    <Input.TextArea
+                                                                                                        value={addModalDetailAddress}
+                                                                                                        onChange={e => { setAddModalDetailAddress(e.target.value) }}
+                                                                                                        placeholder='Địa chỉ chi tiết'
 
-                                                                                            <Form.Item<FieldType>
-                                                                                                label="địa chỉ chi tiết"
-                                                                                                name="detail"
-                                                                                                rules={[{ required: true, message: 'Hãy nhập địa chỉ chi tiết' }]}
-                                                                                            >
-                                                                                                <Input.TextArea
-                                                                                                    value={addModalDetailAddress}
-                                                                                                    onChange={e => { setAddModalDetailAddress(e.target.value) }}
-                                                                                                    placeholder='Địa chỉ chi tiết'
-
-                                                                                                />
-                                                                                            </Form.Item>
+                                                                                                    />
+                                                                                                </Form.Item>
+                                                                                            </div>
 
 
                                                                                             <div className="flex justify-end"><Button className="bg-cyan-600 font-bold text-slate-100" type="submit">Submit</Button></div>
@@ -677,13 +743,104 @@ function SellPage() {
                                                                     </DialogContent>
                                                                 </Dialog>
                                                             </div>
+                                                            <div className="flex flex-col mt-3">
+                                                                <p>Tên khách hàng: {currentCustomer ? currentCustomer.full_name : ''}</p>
+                                                                <p>Email: {currentCustomer && currentCustomer.email ? currentCustomer.email : 'không có'}</p>
+                                                                <p>Số điện thoại: {currentCustomer ? currentCustomer.phone : ''}</p>
+                                                                <p>Địa chỉ: {currentCustomerAddress?.commune} - {currentCustomerAddress?.province} - {currentCustomerAddress?.district}</p>
+                                                            </div>
+                                                            <div className="mt-4">
+                                                                <p className="text-sm text-slate-500">thông tin nhận hàng</p>
+                                                                {sellShip && <>
+                                                                    <Form
+                                                                        name="basic"
+                                                                        labelCol={{ span: 8 }}
+                                                                        wrapperCol={{ span: 16 }}
+                                                                        style={{ maxWidth: 600 }}
+                                                                        initialValues={{ remember: true }}
+                                                                        onFinish={(value) => { updateBill(value) }}
+                                                                        autoComplete="off"
+                                                                    >
+                                                                        <div>
+                                                                            <p>Thông tin khách hàng</p>
+                                                                            <Form.Item<FieldType>
+                                                                                label="Họ và tên"
+                                                                                name="fullName"
+                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                            >
+                                                                                <Input defaultValue={currentBillSelected.receiver_name ? currentBillSelected.receiver_name : ""} />
+                                                                            </Form.Item>
+
+                                                                            <Form.Item<FieldType>
+                                                                                label="Số điện thoại"
+                                                                                name="phone"
+                                                                                rules={[{ required: true, message: 'Please input your password!' }]}
+                                                                            >
+                                                                                <Input defaultValue={currentBillSelected.receiver_phone ? currentBillSelected.receiver_phone : ""} />
+                                                                            </Form.Item>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p>Thông tin địa chỉ</p>
+                                                                            <Form.Item<FieldType>
+                                                                                label="Province"
+                                                                                name="province"
+                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                            >
+                                                                                <Select className="" defaultValue={currentBillSelected.receiver_district ? currentBillSelected.receiver_district : ""}>
+                                                                                    {vnData.map((province) => {
+                                                                                        return <option key={province.code} value={province.name}>{province.name}</option>
+                                                                                    })}
+                                                                                </Select>
+                                                                            </Form.Item>
+                                                                            <Form.Item<FieldType>
+                                                                                label="Quận/Huyện"
+                                                                                name="district"
+                                                                                rules={[{ required: true, message: 'Please input your username!' }]}
+                                                                            >
+                                                                                <Select className="" placeholder='Quận/Huyện' defaultValue={currentBillSelected.receiver_province ? currentBillSelected.receiver_province : ""}>
+                                                                                    {
+                                                                                        listDistricts.map(district => {
+                                                                                            return <option key={district.code} value={district.name}>{district.name}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Select>
+                                                                            </Form.Item>
+                                                                            <Form.Item<FieldType>
+                                                                                label="Xã/Thị trấn"
+                                                                                name="ward"
+                                                                                rules={[{ required: true, message: 'Hãy nhập' }]}
+                                                                            >
+                                                                                <Select className="" placeholder='Xã/Thị trấn' defaultValue={currentBillSelected.receiver_province ? currentBillSelected.receiver_province : ""}>
+                                                                                    {
+                                                                                        listWards.map(ward => {
+                                                                                            return <option key={ward.code} value={ward.name}>{ward.name}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Select>
+                                                                            </Form.Item>
+
+                                                                            <Form.Item<FieldType>
+                                                                                label="địa chỉ chi tiết"
+                                                                                name="detail"
+                                                                                rules={[{ required: true, message: 'Hãy nhập địa chỉ chi tiết' }]}
+                                                                            >
+                                                                                <Input.TextArea
+                                                                                    defaultValue={currentBillSelected.receiver_details ? currentBillSelected.receiver_details : ""}
+                                                                                    placeholder='Địa chỉ chi tiết'
+                                                                                />
+                                                                            </Form.Item>
+                                                                        </div>
+
+                                                                        <div className="flex justify-end"><Button className="bg-cyan-600 font-bold text-slate-100" type="submit">Đặt địa chỉ</Button></div>
+                                                                    </Form>
+                                                                </>
+                                                                }
+                                                            </div>
                                                         </div>
                                                         <div className="w-1/2 max-md:w-full">
                                                             <p className="text-xl font-bold">Thông tin thanh toán</p>
-                                                            {/* Modal voucher */}
                                                             <div className="flex justify-between items-center">
                                                                 <p>Phiếu giảm giá</p>
-
                                                                 <Dialog>
                                                                     <DialogTrigger>
                                                                         <div className="flex items-center gap-5">
@@ -738,7 +895,7 @@ function SellPage() {
                                                             <div className="flex flex-col gap-2 mt-2">
                                                                 <div className="flex justify-between">
                                                                     <p>Tạm tính</p>
-                                                                    <p>450.000 đ</p>
+                                                                    <p>{currentBillSelectedProduct.reduce((total, current) => total + Number.parseFloat(current!.unit_price!.toString()) * current!.quantity!, 0)} đ</p>
                                                                 </div>
                                                                 <div className="flex justify-between">
                                                                     <p>Giảm giá</p>
@@ -746,25 +903,47 @@ function SellPage() {
                                                                 </div>
                                                                 <div className="flex justify-between">
                                                                     <p>Tổng tiền</p>
-                                                                    <p>430.000 đ</p>
+                                                                    <p>{currentBillSelectedProduct.reduce((total, current) => total + Number.parseFloat(current!.unit_price!.toString()) * current!.quantity!, 0) - (selectedVoucher ? selectedVoucher?.value : 0)} đ</p>
+                                                                </div>
+                                                                <p>Loại</p>
+                                                                <div className="flex gap-2">
+                                                                    <div onClick={() => { setSellShip(false) }} className={`px-5 py-2 w-28 text-center bg-slate-100 ${!sellShip ? 'relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-cyan-300' : ''}`}>Tại quầy</div>
+                                                                    <div onClick={() => { setSellShip(true) }} className={`px-5 py-2 w-28 text-center bg-slate-100 ${sellShip ? 'relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-cyan-300' : ''}`}>Ship</div>
                                                                 </div>
                                                             </div>
+
                                                             {/* thanh toán */}
                                                             <div className="flex gap-3 mt-3">
-                                                                <div className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
+                                                                <div onClick={() => { setPaymentType(0) }} className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
                                                                     <TbBrandCashapp />
                                                                     <p>tiền mặt</p>
                                                                 </div>
-                                                                <div className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
+                                                                <div onClick={() => { setPaymentType(1) }} className="w-1/2 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
                                                                     <BsBank2 />
                                                                     <p>chuyển khoản</p>
                                                                 </div>
                                                             </div>
+                                                            <div onClick={() => { setPaymentType(2) }} className="mt-5 py-4 bg-slate-100 hover:bg-slate-200 flex gap-2 items-center justify-center border-[1px] border-slate-500 ">
+                                                                <div className="flex gap-2">
+                                                                    <TbBrandCashapp />
+                                                                    <BsBank2 />
+                                                                </div>
+                                                                <div>
+                                                                    <p>tiền mặt và chuyển khoản</p>
+                                                                </div>
+                                                            </div>
 
+                                                            {paymentType == 2 &&
+                                                                <div className="flex flex-col gap-2">
+                                                                    <p>Số tiền khách đã chuyển khoản</p>
+                                                                    <Input type="number" value={digitalCurrency} max={currentBillSelectedProduct.reduce((total, current) => total + Number.parseFloat(current!.unit_price!.toString()) * current!.quantity!, 0) - (selectedVoucher ? selectedVoucher?.value : 0)} onChange={e => setDigitalCurrency(Number.parseInt(e.target.value))} />
+                                                                    <p>Tiền mặt cần đưa: {currentBillSelectedProduct.reduce((total, current) => total + Number.parseFloat(current!.unit_price!.toString()) * current!.quantity!, 0) - (selectedVoucher ? selectedVoucher?.value : 0) - digitalCurrency}</p>
+                                                                </div>
+                                                            }
                                                         </div>
                                                     </div>
                                                 </div>
-
+                                                <Button onClick={handleSell}>Hoàn thành</Button>
                                             </div>
                                     }
                                 </div>

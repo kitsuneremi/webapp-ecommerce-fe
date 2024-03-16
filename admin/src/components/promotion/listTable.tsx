@@ -156,7 +156,7 @@ export default function ListTable({ data }: { data: PromotionResponse[] }) {
                                 <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>Xóa sản phẩm</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { router.replace(`promotion?id=${row.getValue('id')}`); }}>Cập nhật sản phẩm</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { router.replace(`promotion/edit/${row.getValue('id')}`); }}>Cập nhật sản phẩm</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

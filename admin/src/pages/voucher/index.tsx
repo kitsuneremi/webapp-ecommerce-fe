@@ -10,9 +10,9 @@ import { baseUrl } from '../../lib/functional';
 import { useToast } from '@/components/ui/use-toast';
 import { Layout as DashboardLayout } from '../../layouts/dashboard/layout';
 import { makeid } from '../../lib/functional';
-import { redirect, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ListTable from '../../components/voucher/listTable'
-import { CustomerResponse, ProductResponse, VoucherResponse } from '../../lib/type';
+import { VoucherResponse } from '../../lib/type';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ import { useAppSelector } from '../../redux/storage';
 import ReduxProvider from '../../redux/provider'
 import { zodResolver } from "@hookform/resolvers/zod"
 import ListCustomer from '../../components/voucher/listCustomer'
+import { CustomerResponse } from "../../lib/type"
 const { RangePicker } = DatePicker
 
 const formSchema = z.object({
@@ -41,8 +42,8 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: "name must be at least 2 characters.",
     }),
-    value: z.number().min(4, {
-        message: "value must be at least 2 characters.",
+    value: z.number().min(1, {
+        message: "value must be at least 1 characters.",
     }),
     target_type: z.number({
         required_error: "You need to select a target type.",
@@ -63,18 +64,25 @@ const formSchema = z.object({
 const VoucherPage = (): JSX.Element => {
 
     const { toast } = useToast();
+    const router = useRouter();
 
     const selectedCustomer = useAppSelector(state => state.voucherReducer.value.selected)
+
+    const [VoucherType, setVoucherType] = useState<string>("0");
 
     const path = useSearchParams();
     const [panel, setPanel] = useState<number>(0);
 
-    const [targetVoucher, setTargetVoucher] = useState<VoucherResponse>()
+    const [targetVoucher, setTargetVoucher] = useState<VoucherResponse>();
 
     const [data, setData] = useState<VoucherResponse[]>([]);
 
-    const [discountType, setDiscountType] = useState<boolean>(false)
+    const [discountType, setDiscountType] = useState<boolean>(false);
+    const [listCustomer, setListCustomer] = useState<CustomerResponse[]>([]);
 
+    useEffect(() => {
+        axios.get(`${baseUrl}/customer`).then(res => { setListCustomer(res.data) })
+    }, [])
 
     const [date, setDate] = useState<[Dayjs, Dayjs]>([dayjs(new Date()), dayjs(new Date())]);
 
@@ -96,7 +104,6 @@ const VoucherPage = (): JSX.Element => {
         }
     )
 
-
     useEffect(() => {
         setDate([dayjs(Date.now()), dayjs(Date.now())])
     }, [])
@@ -108,8 +115,10 @@ const VoucherPage = (): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        console.log(selectedCustomer);
-    }, [selectedCustomer])
+        if (panel == 0) {
+            router.push('/voucher')
+        }
+    }, [panel])
 
     useEffect(() => {
         if (path && path.get("id")) {
@@ -123,23 +132,55 @@ const VoucherPage = (): JSX.Element => {
 
 
     const handleSubmitForm = (values) => {
-        if (selectedCustomer.length == 0) return toast({ title: 'chưa chọn khách hàng nào' })
+        if (VoucherType == "0") {
+            axios.post(`${baseUrl}/voucher`, {
+                code: values.code,
+                name: values.name,
+                value: values.value,
+                target_type: values.target_type,
+                usage_limit: values.usage_limit,
+                discount_type: values.discount_type,
+                max_disount_value: values.max_discount_value,
+                order_min_value: values.order_min_value,
+                startDate: date[0].toDate(),
+                endDate: date[1].toDate(),
+                lstCustomer: listCustomer.map(val => { return val.id })
+            }).then(res => {
+                alert("Đã tạo voucher thành công")
+            })
+        } else {
+            if (selectedCustomer.length > 0) {
+                axios.post(`${baseUrl}/voucher`, {
+                    code: values.code,
+                    name: values.name,
+                    value: values.value,
+                    target_type: values.target_type,
+                    usage_limit: values.usage_limit,
+                    discount_type: values.discount_type,
+                    max_disount_value: values.max_discount_value,
+                    order_min_value: values.order_min_value,
+                    startDate: date[0].toDate(),
+                    endDate: date[1].toDate(),
+                    lstCustomer: selectedCustomer.map(val => { return val.id })
+                }).then(res => {
+                    alert("Đã tạo voucher thành công")
+                })
+            } else {
+                toast({ title: 'chưa chọn khách hàng nào' })
+                alert("chưa chọn khách hàng nào")
+            }
+        }
 
-        axios.post(`${baseUrl}/voucher`, {
-            code: values.code,
-            name: values.name,
-            value: values.value,
-            targetType: values.target_type,
-            usageLimit: values.usage_limit,
-            discountType: values.discount_type,
-            max_disount_value: values.max_discount_value,
-            order_min_value: values.order_min_value,
-            startDate: date[0].toDate(),
-            endDate: date[1].toDate(),
-            lstCustomer: selectedCustomer.map(val => { return val.id })
-        })
     }
 
+    const DisableVoucher = () => {
+        if (targetVoucher) {
+            axios.post('/api/voucher/disable', {
+                voucherId: targetVoucher?.id,
+                status: targetVoucher.status == "Đã tạm dừng" ? "Đang diễn ra" : "Đã tạm dừng"
+            })
+        }
+    }
 
     return (
         <DashboardLayout>
@@ -154,7 +195,8 @@ const VoucherPage = (): JSX.Element => {
                     </button>
                 </div>
                 <div>
-                    {panel == 0 &&
+                    {
+                        panel == 0 &&
                         <>
                             <div className="flex gap-5">
                                 <Input placeholder="Basic usage" />
@@ -166,8 +208,8 @@ const VoucherPage = (): JSX.Element => {
                     }
                     {
                         panel == 1 &&
-                        <div className='w-full flex justify-center p-5 gap-5'>
-                            <div className='flex flex-col gap-3 w-5/12'>
+                        <div className='w-full flex max-xl:flex-col justify-center p-5 gap-5'>
+                            <div className='flex flex-col gap-3 w-5/12 max-xl:w-full'>
                                 <Form {...form}>
                                     <form onSubmit={e => { e.preventDefault() }} className="space-y-8">
                                         <FormField
@@ -250,6 +292,20 @@ const VoucherPage = (): JSX.Element => {
                                         />
                                         <FormField
                                             control={form.control}
+                                            name="value"
+                                            render={({ field }) =>
+                                            (
+                                                <FormItem>
+                                                    <FormLabel>Gía trị giảm</FormLabel>
+                                                    <FormControl>
+                                                        <InputNumber className='w-full' {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
                                             name="description"
                                             render={({ field }) =>
                                             (
@@ -268,7 +324,7 @@ const VoucherPage = (): JSX.Element => {
                                             render={({ field }) =>
                                             (
                                                 <FormItem>
-                                                    <FormLabel>Đối tượng áp dụng</FormLabel>
+                                                    <FormLabel>Loại hình áp dụng</FormLabel>
                                                     <FormControl defaultValue='1'>
                                                         <RadioGroup className="flex gap-3 items-center">
                                                             <div className="flex items-center space-x-2">
@@ -285,6 +341,18 @@ const VoucherPage = (): JSX.Element => {
                                                 </FormItem>
                                             )}
                                         />
+                                        <p className='mt-1 text-sm font-semibold'>Đối tượng áp dụng</p>
+                                        <RadioGroup value={VoucherType} onValueChange={e => { setVoucherType(e) }}>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value={"0"} id="option-one" />
+                                                <Label htmlFor="option-one">Tất cả khách hàng</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value={"1"} id="option-two" />
+                                                <Label htmlFor="option-two">Khách hàng chỉ định</Label>
+                                            </div>
+                                        </RadioGroup>
+
                                         <div className='mt-3'>
                                             <label>
                                                 <p className='mb-1 text-sm text-slate-600'>Ngày bắt đầu {"->"} ngày kết thúc</p>
@@ -293,10 +361,12 @@ const VoucherPage = (): JSX.Element => {
                                                 <RangePicker className='w-full' value={date} onChange={(val) => { if (val) { setDate(val) } }} showTime />
                                             </label>
                                         </div>
-                                        <Button type="submit" onClick={() => { handleSubmitForm(form.getValues()) }}>Submit</Button>
+                                        <div className='flex gap-4'>
+                                            <Button type="submit" onClick={() => { handleSubmitForm(form.getValues()) }}>Submit</Button>
+                                            {targetVoucher && <Button onClick={() => { DisableVoucher() }}>{targetVoucher.status == "Đang diễn ra" ? "Tạm dừng Voucher" : "Tiếp tục Voucher"}</Button>}
+                                        </div>
                                     </form>
                                 </Form>
-
                             </div>
                             <div className='flex-grow'>
                                 <ListCustomer />
