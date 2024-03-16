@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const data = await prisma.bill.create({
         data: {
             code_bill: makeid(),
-            status: null,
+            status: "chưa thanh toán",
             booking_date: new Date(),
             payment_date: null,
             delivery_date: null,
@@ -41,22 +41,22 @@ export async function POST(req: NextRequest) {
             receiver_phone: null,
             cash: null,
             created_by: "admin",
-            delete_flag: null,
+            delete_flag: false,
             digital_currency: null,
             into_money: null,
             total_money: null,
-            created_date: null,
-            last_modified_date: null,
+            created_date: new Date(),
+            last_modified_date: new Date(),
             user_id: null,
-            bill_type: null,
-            last_modified_by: null,
+            bill_type: "Offline",
+            last_modified_by: "admin",
             email: null,
             receiver_commune: null,
             receiver_details: null,
             receiver_district: null,
-            receiver_province: null
+            receiver_province: null,
         }
     })
 
-    return new Response(JSON.stringify(data));
+    return new Response(JSON.stringify({ ...data, id: Number.parseInt(data.id.toString()) }));
 }

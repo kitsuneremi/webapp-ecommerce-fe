@@ -4,9 +4,7 @@ import { NextRequest } from "next/server";
 export async function GET(req: NextRequest) {
     const data = await prisma.bill.findMany({
         where: {
-            customer_id: {
-                equals: null
-            }
+            status: "chưa thanh toán"
         }
     })
 
